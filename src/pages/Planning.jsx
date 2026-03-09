@@ -308,7 +308,6 @@ export function Planning() {
 
 function PlanForm({ initialData, onSave, onCancel }) {
   const [title, setTitle] = useState(initialData?.title || '');
-  const [progress, setProgress] = useState(initialData?.progress || '创意');
   const [startDate, setStartDate] = useState(initialData?.startDate || '');
   const [endDate, setEndDate] = useState(initialData?.endDate || '');
   const [platforms, setPlatforms] = useState(initialData?.platforms || []);
@@ -324,7 +323,7 @@ function PlanForm({ initialData, onSave, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onSave({ title, progress, startDate, endDate, platforms });
+    onSave({ title, progress: initialData?.progress || '创意', startDate, endDate, platforms });
   };
 
   return (
@@ -387,31 +386,6 @@ function PlanForm({ initialData, onSave, onCancel }) {
               }}
             >
               {p}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-500 mb-2">
-          当前状态
-        </label>
-        <div className="flex gap-2 flex-wrap">
-          {progressSteps.map(step => (
-            <button
-              key={step}
-              type="button"
-              onClick={() => setProgress(step)}
-              className={`px-4 py-2.5 text-sm rounded-xl font-medium transition-all ${
-                progress === step 
-                  ? 'text-white' 
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-              style={{
-                background: progress === step ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : '',
-              }}
-            >
-              {step}
             </button>
           ))}
         </div>

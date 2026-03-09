@@ -31,8 +31,6 @@ export function Profile() {
 
   const accountItems = [
     { icon: '👤', text: '个人资料', right: '', hasArrow: true },
-    { icon: '🔗', text: '平台绑定', right: 'YouTube · TikTok · Bilibili', hasArrow: true },
-    { icon: '🔔', text: '推送通知', right: '开启', hasArrow: true },
   ];
 
   const aboutItems = [
