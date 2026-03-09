@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Planning } from './pages/Planning';
@@ -37,11 +37,15 @@ function AppContent() {
   const [dataLoading, setDataLoading] = useState(false);
   const [data, setData] = useState({ plans: [], tasks: [], inspirations: [] });
   const navigate = useNavigate();
+  const socketInitialized = useRef(false);
+  const pendingUpdates = useRef(new Set());
 
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
+    socketInitialized.current = false;
+    pendingUpdates.current.clear();
     disconnectSocket();
     navigate('/login');
   }, [navigate]);
@@ -65,11 +69,21 @@ function AppContent() {
 
     fetchData();
 
+    if (socketInitialized.current) return;
+    socketInitialized.current = true;
+
     initSocket((change) => {
+      const updateKey = `${change.type}_${change.action}_${change.data?.id}`;
+      if (pendingUpdates.current.has(updateKey)) {
+        pendingUpdates.current.delete(updateKey);
+        return;
+      }
+      
       setData(prev => {
         const { type, action, data: item } = change;
         if (type === 'plan') {
           if (action === 'create') {
+            if (prev.plans.some(p => p.id === item.id)) return prev;
             return { ...prev, plans: [...prev.plans, item] };
           } else if (action === 'update') {
             return { ...prev, plans: prev.plans.map(p => p.id === item.id ? item : p) };
@@ -78,6 +92,7 @@ function AppContent() {
           }
         } else if (type === 'task') {
           if (action === 'create') {
+            if (prev.tasks.some(t => t.id === item.id)) return prev;
             return { ...prev, tasks: [...prev.tasks, item] };
           } else if (action === 'update') {
             return { ...prev, tasks: prev.tasks.map(t => t.id === item.id ? item : t) };
@@ -86,6 +101,7 @@ function AppContent() {
           }
         } else if (type === 'inspiration') {
           if (action === 'create') {
+            if (prev.inspirations.some(i => i.id === item.id)) return prev;
             return { ...prev, inspirations: [...prev.inspirations, item] };
           } else if (action === 'update') {
             return { ...prev, inspirations: prev.inspirations.map(i => i.id === item.id ? item : i) };

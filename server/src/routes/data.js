@@ -38,7 +38,45 @@ router.get('/', (req, res) => {
   });
 });
 
+const validatePlanInput = (data) => {
+  const errors = [];
+  if (!data.title || typeof data.title !== 'string' || data.title.trim().length === 0) {
+    errors.push('标题不能为空');
+  }
+  if (data.title && data.title.length > 200) {
+    errors.push('标题不能超过200字符');
+  }
+  return errors;
+};
+
+const validateTaskInput = (data) => {
+  const errors = [];
+  if (!data.title || typeof data.title !== 'string' || data.title.trim().length === 0) {
+    errors.push('标题不能为空');
+  }
+  if (data.title && data.title.length > 200) {
+    errors.push('标题不能超过200字符');
+  }
+  return errors;
+};
+
+const validateInspirationInput = (data) => {
+  const errors = [];
+  if (!data.content || typeof data.content !== 'string' || data.content.trim().length === 0) {
+    errors.push('内容不能为空');
+  }
+  if (data.content && data.content.length > 5000) {
+    errors.push('内容不能超过5000字符');
+  }
+  return errors;
+};
+
 router.post('/plans', (req, res) => {
+  const errors = validatePlanInput(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ error: errors.join(', ') });
+  }
+
   const db = getDb();
   const { id, title, startDate, endDate, progress, platforms, status } = req.body;
   
@@ -52,7 +90,7 @@ router.post('/plans', (req, res) => {
 
   const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'plan', 
     action: 'create', 
     data: { 
@@ -81,7 +119,7 @@ router.put('/plans/:id', (req, res) => {
 
   const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'plan', 
     action: 'update', 
     data: { 
@@ -100,7 +138,7 @@ router.delete('/plans/:id', (req, res) => {
   
   db.prepare('DELETE FROM plans WHERE id = ? AND userId = ?').run(id, req.userId);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'plan', 
     action: 'delete', 
     data: { id },
@@ -111,6 +149,11 @@ router.delete('/plans/:id', (req, res) => {
 });
 
 router.post('/tasks', (req, res) => {
+  const errors = validateTaskInput(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ error: errors.join(', ') });
+  }
+
   const db = getDb();
   const { id, title, category } = req.body;
   
@@ -123,7 +166,7 @@ router.post('/tasks', (req, res) => {
 
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'task', 
     action: 'create', 
     data: { ...task, completed: false },
@@ -147,7 +190,7 @@ router.put('/tasks/:id', (req, res) => {
 
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'task', 
     action: 'update', 
     data: { ...task, completed: Boolean(task.completed) },
@@ -163,7 +206,7 @@ router.delete('/tasks/:id', (req, res) => {
   
   db.prepare('DELETE FROM tasks WHERE id = ? AND userId = ?').run(id, req.userId);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'task', 
     action: 'delete', 
     data: { id },
@@ -174,6 +217,11 @@ router.delete('/tasks/:id', (req, res) => {
 });
 
 router.post('/inspirations', (req, res) => {
+  const errors = validateInspirationInput(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ error: errors.join(', ') });
+  }
+
   const db = getDb();
   const { id, content, tags } = req.body;
   
@@ -186,7 +234,7 @@ router.post('/inspirations', (req, res) => {
 
   const inspiration = db.prepare('SELECT * FROM inspirations WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'inspiration', 
     action: 'create', 
     data: { 
@@ -214,7 +262,7 @@ router.put('/inspirations/:id', (req, res) => {
 
   const inspiration = db.prepare('SELECT * FROM inspirations WHERE id = ?').get(id);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'inspiration', 
     action: 'update', 
     data: { 
@@ -238,7 +286,7 @@ router.delete('/inspirations/:id', (req, res) => {
   
   db.prepare('DELETE FROM inspirations WHERE id = ? AND userId = ?').run(id, req.userId);
   
-  req.io.emit('dataChange', { 
+  req.io.to(`user_${req.userId}`).emit('dataChange', { 
     type: 'inspiration', 
     action: 'delete', 
     data: { id },

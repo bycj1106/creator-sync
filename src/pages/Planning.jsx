@@ -1,18 +1,8 @@
 import { useState } from 'react';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
+import { SavingOverlay } from '../components/UI';
 import { dataApi } from '../services/api';
-
-function SavingOverlay() {
-  return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
-      <div className="bg-white rounded-2xl p-4 flex items-center gap-3">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-600 font-medium">保存中...</p>
-      </div>
-    </div>
-  );
-}
 
 const progressSteps = ['创意', '脚本', '拍摄', '剪辑', '发布'];
 
@@ -89,8 +79,7 @@ export function Planning({ data: plans = [], updateData }) {
     setSaving(true);
     try {
       if (editingPlan) {
-        const updated = await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
-        updateData('plans', 'update', updated);
+        await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
       } else {
         const newPlan = {
           id: generateId(),
@@ -101,8 +90,8 @@ export function Planning({ data: plans = [], updateData }) {
           status: 'pending',
           createdAt: new Date().toISOString(),
         };
-        const created = await dataApi.createPlan(newPlan);
-        updateData('plans', 'create', created);
+        await dataApi.createPlan(newPlan);
+        updateData('plans', 'create', { ...newPlan, id: newPlan.id });
       }
       setIsModalOpen(false);
     } finally {
