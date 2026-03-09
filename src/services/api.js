@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
 
 let token = localStorage.getItem('token');
 
@@ -92,3 +93,5 @@ export const dataApi = {
     method: 'DELETE',
   }),
 };
+
+export { WS_URL };

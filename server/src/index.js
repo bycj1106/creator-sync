@@ -8,14 +8,20 @@ import dataRoutes from './routes/data.js';
 const app = express();
 const httpServer = createServer(app);
 
+const CORS_ORIGIN = import.meta.env?.CORS_ORIGIN || '*';
+
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:4173'],
-    methods: ['GET', 'POST']
+    origin: CORS_ORIGIN,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGIN,
+  credentials: true
+}));
 app.use(express.json());
 
 app.use((req, res, next) => {

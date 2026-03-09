@@ -1,12 +1,12 @@
 import { io } from 'socket.io-client';
-import { getToken } from './api';
+import { getToken, WS_URL } from './api';
 
 let socket = null;
 
 export const initSocket = (onDataChange) => {
   if (socket) return socket;
 
-  socket = io('http://localhost:3001', {
+  socket = io(WS_URL, {
     transports: ['websocket'],
   });
 

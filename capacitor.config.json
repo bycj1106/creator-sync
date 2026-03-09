@@ -1,0 +1,9 @@
+{
+  "appId": "com.creatorsync.app",
+  "appName": "CreatorSync",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
