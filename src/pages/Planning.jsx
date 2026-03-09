@@ -401,13 +401,13 @@ function PlanForm({ initialData, onSave, onCancel }) {
         <label className="block text-sm font-medium text-gray-500 mb-2">
           发布平台
         </label>
-        <div className="flex gap-2">
-          {['YouTube', 'TikTok', 'Bilibili'].map(p => (
+        <div className="flex gap-2 flex-wrap">
+          {['Bilibili', '抖音', '快手', 'TapTap', 'YouTube'].map(p => (
             <button
               key={p}
               type="button"
               onClick={() => togglePlatform(p)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
                 platforms.includes(p)
                   ? 'text-white'
                   : 'bg-gray-100 text-gray-600'

@@ -152,7 +152,7 @@ export function Profile() {
         </button>
 
         <p className="text-center text-xs text-gray-400 mt-6 pb-4">
-          创作者同步助手 v1.0.0
+          创作者同步助手 @四夕云升
         </p>
       </div>
     </div>
