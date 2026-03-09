@@ -11,11 +11,11 @@ function isDateInRange(date, startDate, endDate) {
 }
 
 const statusConfig = {
-  '创意': { label: '创意中', color: 'tag-primary' },
-  '脚本': { label: '脚本中', color: 'tag-warning' },
-  '拍摄': { label: '拍摄中', color: 'tag-pink' },
-  '剪辑': { label: '剪辑中', color: 'tag-primary' },
-  '发布': { label: '已发布', color: 'tag-success' },
+  '创意': { label: '创意中', color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
+  '脚本': { label: '脚本中', color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
+  '拍摄': { label: '拍摄中', color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
+  '剪辑': { label: '剪辑中', color: '#FF2D55', bg: 'rgba(255, 45, 85, 0.1)' },
+  '发布': { label: '已发布', color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
 };
 
 export function Planning() {
@@ -105,19 +105,8 @@ export function Planning() {
     setPlans(plans.map(p => p.id === planId ? { ...p, progress } : p));
   };
 
-  const scrollToDate = (direction) => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -80 : 80;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   const getStatusColor = (progress) => {
-    const idx = progressSteps.indexOf(progress);
-    if (idx === 4) return 'tag-success';
-    if (idx >= 2) return 'tag-pink';
-    if (idx >= 1) return 'tag-warning';
-    return 'tag-primary';
+    return statusConfig[progress] || statusConfig['创意'];
   };
 
   return (
@@ -127,179 +116,171 @@ export function Planning() {
         <p className="subtitle">{formatDisplayDate(today)}</p>
       </header>
 
-      <div className="p-4">
-        <div className="card p-4 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <button 
-              onClick={handlePrevMonth}
-              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span className="font-semibold text-gray-800">{currentYear}年{currentMonth + 1}月</span>
-            <button 
-              onClick={handleNextMonth}
-              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {weekdays.map(day => (
-              <div key={day} className="text-center text-xs text-gray-400 py-2 font-medium">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {monthDays.map((date, index) => {
-              if (!date) {
-                return <div key={`empty-${index}`} className="aspect-square" />;
-              }
-              const dateStr = formatDate(date);
-              const plansOnDate = getPlansForDate(date);
-              const hasPlan = plansOnDate.length > 0;
-              const isSelected = selectedDateStr === dateStr;
-              const isToday = formatDate(date) === formatDate(today);
-              
-              return (
-                <button
-                  key={dateStr}
-                  onClick={() => handleDateClick(date)}
-                  className={`aspect-square flex flex-col items-center justify-center rounded-xl relative transition-all ${
-                    isSelected ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg' : 
-                    isToday ? 'bg-indigo-50 text-indigo-600 ring-2 ring-indigo-300' :
-                    'hover:bg-gray-100'
-                  }`}
-                >
-                  <span className={`text-sm font-medium ${isSelected ? '' : isToday ? '' : 'text-gray-600'}`}>{date.getDate()}</span>
-                  {hasPlan && (
-                    <span className={`absolute bottom-1 flex gap-0.5 ${isSelected ? 'bg-white/30' : 'bg-indigo-500'}`}>
-                      {plansOnDate.slice(0, 3).map((_, i) => (
-                        <span key={i} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`} />
-                      ))}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+      <div className="p-4 space-y-3">
+        <div className="card">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <button 
+                onClick={handlePrevMonth}
+                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
+              >
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="font-semibold text-gray-800">{currentYear}年{currentMonth + 1}月</span>
+              <button 
+                onClick={handleNextMonth}
+                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
+              >
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekdays.map(day => (
+                <div key={day} className="text-center text-xs text-gray-400 py-2 font-medium">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1">
+              {monthDays.map((date, index) => {
+                if (!date) {
+                  return <div key={`empty-${index}`} className="aspect-square" />;
+                }
+                const dateStr = formatDate(date);
+                const plansOnDate = getPlansForDate(date);
+                const hasPlan = plansOnDate.length > 0;
+                const isSelected = selectedDateStr === dateStr;
+                const isToday = formatDate(date) === formatDate(today);
+                
+                return (
+                  <button
+                    key={dateStr}
+                    onClick={() => handleDateClick(date)}
+                    className={`aspect-square flex flex-col items-center justify-center rounded-xl relative text-sm transition-all ${
+                      isSelected ? 'text-white' : isToday ? 'text-blue-500 font-semibold' : 'text-gray-600'
+                    }`}
+                    style={{
+                      background: isSelected ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : isToday ? 'rgba(0, 122, 255, 0.1)' : 'transparent',
+                    }}
+                  >
+                    <span>{date.getDate()}</span>
+                    {hasPlan && (
+                      <span className={`absolute bottom-1 flex gap-0.5 ${isSelected ? 'bg-white/30' : 'bg-blue-500'}`}>
+                        {plansOnDate.slice(0, 3).map((_, i) => (
+                          <span key={i} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />
+                        ))}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {selectedDate && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
               <h3 className="font-semibold text-gray-800 text-lg">{formatDisplayDate(selectedDate)} 计划</h3>
               <button
                 onClick={handleCreatePlan}
-                className="text-sm font-medium text-indigo-600"
+                className="text-sm font-medium text-blue-500"
               >
                 + 添加
               </button>
             </div>
             
             {selectedPlans.length === 0 ? (
-              <div className="card text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card p-8 text-center">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gray-100 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
                 <p className="text-gray-400 text-sm">暂无视频规划</p>
               </div>
             ) : (
-              selectedPlans.map(plan => (
-                <div key={plan.id} className="card card-hover mb-3 p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 mb-1">{plan.title}</h4>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span>{plan.startDate}</span>
-                        {plan.startDate !== plan.endDate && <span>~ {plan.endDate}</span>}
+              selectedPlans.map(plan => {
+                const statusStyle = getStatusColor(plan.progress);
+                return (
+                  <div key={plan.id} className="card mb-3">
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800 mb-1">{plan.title}</h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <span>{plan.startDate}</span>
+                            {plan.startDate !== plan.endDate && <span>~ {plan.endDate}</span>}
+                          </div>
+                        </div>
+                        <span 
+                          className="px-2.5 py-1 rounded-lg text-xs font-medium"
+                          style={{ background: statusStyle.bg, color: statusStyle.color }}
+                        >
+                          {statusStyle.label}
+                        </span>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-gray-500 mb-2">
+                          <span>制作进度</span>
+                          <span className="font-medium text-blue-500">{plan.progress}</span>
+                        </div>
+                        <div className="flex gap-1.5">
+                          {progressSteps.map((step, idx) => {
+                            const currentIdx = progressSteps.indexOf(plan.progress);
+                            let dotClass = 'progress-dot';
+                            if (idx < currentIdx) dotClass += ' completed';
+                            else if (idx === currentIdx) dotClass += ' active';
+                            return <div key={step} className={dotClass} title={step} />;
+                          })}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-1.5 flex-wrap mb-3">
+                        {progressSteps.map(step => (
+                          <button
+                            key={step}
+                            onClick={() => handleProgressChange(plan.id, step)}
+                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                              plan.progress === step 
+                                ? 'text-white' 
+                                : 'bg-gray-100 text-gray-500'
+                            }`}
+                            style={{
+                              background: plan.progress === step ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : '',
+                            }}
+                          >
+                            {step}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="flex gap-2 pt-3 border-t border-gray-50">
+                        <button
+                          onClick={() => handleEditPlan(plan)}
+                          className="flex-1 py-2 text-sm text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="flex-1 py-2 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          删除
+                        </button>
                       </div>
                     </div>
-                    <span className={`tag ${getStatusColor(plan.progress)}`}>
-                      {statusConfig[plan.progress]?.label || plan.progress}
-                    </span>
                   </div>
-                  
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs text-gray-500 mb-2">
-                      <span>制作进度</span>
-                      <span className="font-medium text-indigo-600">{plan.progress}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {progressSteps.map((step, idx) => {
-                        const currentIdx = progressSteps.indexOf(plan.progress);
-                        let dotClass = 'progress-dot';
-                        if (idx < currentIdx) dotClass += ' completed';
-                        else if (idx === currentIdx) dotClass += ' active';
-                        return <div key={step} className={dotClass} title={step} />;
-                      })}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-1 flex-wrap mb-3">
-                    {progressSteps.map(step => (
-                      <button
-                        key={step}
-                        onClick={() => handleProgressChange(plan.id, step)}
-                        className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
-                          plan.progress === step 
-                            ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                      >
-                        {step}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="flex gap-2 pt-2 border-t border-gray-100">
-                    <button
-                      onClick={() => handleEditPlan(plan)}
-                      className="flex-1 py-2 text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    >
-                      编辑
-                    </button>
-                    <button
-                      onClick={() => handleDeletePlan(plan.id)}
-                      className="flex-1 py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      删除
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
-          </div>
-        )}
-
-        {upcomingPlans.length > 0 && !selectedDate && (
-          <div className="mb-4">
-            <h3 className="font-semibold text-gray-800 text-lg mb-3">近期规划</h3>
-            {upcomingPlans.map(plan => (
-              <div key={plan.id} className="card card-hover mb-3 p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-gray-800">{plan.title}</h4>
-                  <span className={`tag ${getStatusColor(plan.progress)} text-xs`}>
-                    {statusConfig[plan.progress]?.label || plan.progress}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <span className="bg-gray-100 px-2 py-1 rounded">{plan.startDate}</span>
-                  {plan.platforms?.map(p => (
-                    <span key={p} className="text-gray-500">{p}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -349,7 +330,7 @@ function PlanForm({ initialData, onSave, onCancel }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
           视频标题
         </label>
         <input
@@ -357,37 +338,37 @@ function PlanForm({ initialData, onSave, onCancel }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="输入视频标题"
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-500 mb-2">
             开始日期
           </label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-500 mb-2">
             结束日期
           </label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
       
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
           发布平台
         </label>
         <div className="flex gap-2">
@@ -398,9 +379,12 @@ function PlanForm({ initialData, onSave, onCancel }) {
               onClick={() => togglePlatform(p)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 platforms.includes(p)
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-white'
+                  : 'bg-gray-100 text-gray-600'
               }`}
+              style={{
+                background: platforms.includes(p) ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : '',
+              }}
             >
               {p}
             </button>
@@ -409,7 +393,7 @@ function PlanForm({ initialData, onSave, onCancel }) {
       </div>
       
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
           当前状态
         </label>
         <div className="flex gap-2 flex-wrap">
@@ -420,9 +404,12 @@ function PlanForm({ initialData, onSave, onCancel }) {
               onClick={() => setProgress(step)}
               className={`px-4 py-2.5 text-sm rounded-xl font-medium transition-all ${
                 progress === step 
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-white' 
+                  : 'bg-gray-100 text-gray-600'
               }`}
+              style={{
+                background: progress === step ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : '',
+              }}
             >
               {step}
             </button>
@@ -434,13 +421,14 @@ function PlanForm({ initialData, onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium"
+          className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium"
         >
           取消
         </button>
         <button
           type="submit"
-          className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg font-medium"
+          className="flex-1 px-4 py-3 text-white rounded-xl font-medium"
+          style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}
         >
           保存
         </button>

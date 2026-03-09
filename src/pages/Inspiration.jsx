@@ -72,16 +72,19 @@ export function Inspiration() {
         <p className="subtitle">记录创作灵感，紧跟热点话题</p>
       </header>
 
-      <div className="p-4">
+      <div className="p-4 space-y-3">
         {allTags.length > 0 && (
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => setActiveTag('all')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTag === 'all'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'bg-white text-gray-600 border border-gray-200'
+                  ? 'text-white'
+                  : 'bg-white text-gray-600'
               }`}
+              style={{
+                background: activeTag === 'all' ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' : '',
+              }}
             >
               全部
             </button>
@@ -89,11 +92,14 @@ export function Inspiration() {
               <button
                 key={tag}
                 onClick={() => setActiveTag(tag)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   activeTag === tag
-                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-200'
-                    : 'bg-white text-gray-600 border border-gray-200'
+                    ? 'text-white'
+                    : 'bg-white text-gray-600'
                 }`}
+                style={{
+                  background: activeTag === tag ? 'linear-gradient(135deg, #FF2D55 0%, #FF9500 100%)' : '',
+                }}
               >
                 #{tag}
               </button>
@@ -102,14 +108,14 @@ export function Inspiration() {
         )}
 
         {sortedInspirations.length === 0 ? (
-          <div className="card text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
-              <span className="text-4xl">💡</span>
+          <div className="card p-10 text-center">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gray-100 flex items-center justify-center">
+              <span className="text-3xl">💡</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">暂无灵感记录</p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="text-indigo-600 text-sm font-medium"
+              className="text-blue-500 text-sm font-medium"
             >
               + 记录灵感
             </button>
@@ -118,44 +124,46 @@ export function Inspiration() {
           sortedInspirations.map((inspiration, idx) => (
             <div 
               key={inspiration.id} 
-              className="card card-hover mb-3 p-4 animate-fade-in"
-              style={{ animationDelay: `${idx * 50}ms` }}
+              className="card animate-fade-in"
+              style={{ animationDelay: `${idx * 30}ms`, opacity: 0 }}
             >
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-gray-800 flex-1 leading-relaxed">{inspiration.content}</p>
-                <button
-                  onClick={() => handleTogglePin(inspiration.id)}
-                  className={`p-1 flex-shrink-0 transition-transform hover:scale-110 ${inspiration.pinned ? 'text-yellow-500' : 'text-gray-300'}`}
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                {inspiration.tags.map(tag => (
-                  <span key={tag} className="tag tag-pink">#{tag}</span>
-                ))}
-              </div>
-              
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <span className="text-xs text-gray-400">
-                  {formatTimeAgo(inspiration.createdAt)}
-                </span>
-                <div className="flex gap-3">
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-gray-800 flex-1 leading-relaxed pr-4">{inspiration.content}</p>
                   <button
-                    onClick={() => handleConvertToPlan(inspiration)}
-                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                    onClick={() => handleTogglePin(inspiration.id)}
+                    className={`p-1 flex-shrink-0 ${inspiration.pinned ? 'text-yellow-500' : 'text-gray-300'}`}
                   >
-                    转为规划 →
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
                   </button>
-                  <button
-                    onClick={() => handleDelete(inspiration.id)}
-                    className="text-xs text-gray-400 hover:text-red-500"
-                  >
-                    删除
-                  </button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {inspiration.tags.map(tag => (
+                    <span key={tag} className="tag tag-gray">#{tag}</span>
+                  ))}
+                </div>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                  <span className="text-xs text-gray-400">
+                    {formatTimeAgo(inspiration.createdAt)}
+                  </span>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => handleConvertToPlan(inspiration)}
+                      className="text-xs text-blue-500 hover:text-blue-600 font-medium"
+                    >
+                      转为规划 →
+                    </button>
+                    <button
+                      onClick={() => handleDelete(inspiration.id)}
+                      className="text-xs text-gray-400 hover:text-red-500"
+                    >
+                      删除
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -194,7 +202,7 @@ function InspirationForm({ onSave, onCancel }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
           灵感内容
         </label>
         <textarea
@@ -202,12 +210,12 @@ function InspirationForm({ onSave, onCancel }) {
           onChange={(e) => setContent(e.target.value)}
           placeholder="记录你的灵感... 可以是热点话题、创作思路等"
           rows={4}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+          className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
       
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
           标签 (用逗号分隔)
         </label>
         <input
@@ -215,7 +223,7 @@ function InspirationForm({ onSave, onCancel }) {
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="如: 科技, 数码, 热点"
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-400 mt-2">多个标签用逗号分隔</p>
       </div>
@@ -224,13 +232,14 @@ function InspirationForm({ onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium"
+          className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium"
         >
           取消
         </button>
         <button
           type="submit"
-          className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg font-medium"
+          className="flex-1 px-4 py-3 text-white rounded-xl font-medium"
+          style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}
         >
           保存
         </button>
