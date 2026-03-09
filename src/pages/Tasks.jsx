@@ -19,7 +19,7 @@ export function Tasks() {
     ? tasks 
     : activeCategory === 'completed'
     ? tasks.filter(t => t.completed)
-    : tasks.filter(t => t.category === activeCategory);
+    : tasks.filter(t => t.category === activeCategory || !t.category);
 
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;

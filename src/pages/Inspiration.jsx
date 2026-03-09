@@ -14,7 +14,7 @@ export function Inspiration() {
   
   const filteredInspirations = activeTag === 'all'
     ? inspirations
-    : inspirations.filter(i => i.tags.includes(activeTag));
+    : inspirations.filter(i => (i.tags || []).includes(activeTag));
 
   const sortedInspirations = [...filteredInspirations].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
@@ -141,7 +141,7 @@ export function Inspiration() {
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {inspiration.tags.map(tag => (
+                  {(inspiration.tags || []).map(tag => (
                     <span key={tag} className="tag tag-gray">#{tag}</span>
                   ))}
                 </div>

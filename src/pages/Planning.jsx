@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 const progressSteps = ['创意', '脚本', '拍摄', '剪辑', '发布'];
 
 function isDateInRange(date, startDate, endDate) {
+  if (!startDate || !endDate) return false;
   const d = formatDate(date);
   return d >= startDate && d <= endDate;
 }

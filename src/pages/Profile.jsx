@@ -53,7 +53,7 @@ export function Profile() {
               className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-semibold"
               style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}
             >
-              {nickname.charAt(0)}
+              {(nickname || '创').charAt(0)}
             </div>
             <div className="flex-1">
               {isEditing ? (
