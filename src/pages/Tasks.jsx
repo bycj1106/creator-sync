@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
+import { dataApi } from '../services/api';
 
 const categories = [
   { id: 'all', label: '全部' },
@@ -10,10 +10,21 @@ const categories = [
   { id: 'completed', label: '已完成' },
 ];
 
-export function Tasks() {
-  const [tasks, setTasks] = useLocalStorage('creator-sync-tasks', []);
+function SavingOverlay() {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
+      <div className="bg-white rounded-2xl p-4 flex items-center gap-3">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 font-medium">保存中...</p>
+      </div>
+    </div>
+  );
+}
+
+export function Tasks({ data: tasks = [], updateData }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const filteredTasks = activeCategory === 'all' 
     ? tasks 
@@ -24,30 +35,50 @@ export function Tasks() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  const handleAddTask = (data) => {
-    const newTask = {
-      id: generateId(),
-      title: data.title,
-      category: data.category,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    };
-    setTasks([...tasks, newTask]);
-    setIsModalOpen(false);
+  const handleAddTask = async (data) => {
+    setSaving(true);
+    try {
+      const newTask = {
+        id: generateId(),
+        title: data.title,
+        category: data.category,
+        completed: false,
+        createdAt: new Date().toISOString(),
+      };
+      const created = await dataApi.createTask(newTask);
+      updateData('tasks', 'create', created);
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleToggleComplete = (id) => {
-    setTasks(tasks.map(t => 
-      t.id === id ? { ...t, completed: !t.completed } : t
-    ));
+  const handleToggleComplete = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      setSaving(true);
+      try {
+        const updated = await dataApi.updateTask(id, { ...task, completed: !task.completed });
+        updateData('tasks', 'update', updated);
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
-  const handleDeleteTask = (id) => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const handleDeleteTask = async (id) => {
+    setSaving(true);
+    try {
+      await dataApi.deleteTask(id);
+      updateData('tasks', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="min-h-screen pb-20">
+      {saving && <SavingOverlay />}
       <header className="page-header">
         <h1>待办清单</h1>
         <p className="subtitle">已完成 {completedCount} / {tasks.length}</p>

@@ -1,16 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
+import { dataApi } from '../services/api';
 
-export function Inspiration() {
-  const [inspirations, setInspirations] = useLocalStorage('creator-sync-inspirations', []);
+function SavingOverlay() {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
+      <div className="bg-white rounded-2xl p-4 flex items-center gap-3">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 font-medium">保存中...</p>
+      </div>
+    </div>
+  );
+}
+
+export function Inspiration({ data: inspirations = [], updateData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTag, setActiveTag] = useState('all');
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
-  const allTags = [...new Set(inspirations.flatMap(i => i.tags))];
+  const allTags = [...new Set(inspirations.flatMap(i => i.tags || []))];
   
   const filteredInspirations = activeTag === 'all'
     ? inspirations
@@ -22,26 +33,45 @@ export function Inspiration() {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  const handleAddInspiration = (data) => {
-    const newInspiration = {
-      id: generateId(),
-      content: data.content,
-      tags: data.tags.filter(t => t.trim()),
-      pinned: false,
-      createdAt: new Date().toISOString(),
-    };
-    setInspirations([...inspirations, newInspiration]);
-    setIsModalOpen(false);
+  const handleAddInspiration = async (data) => {
+    setSaving(true);
+    try {
+      const newInspiration = {
+        id: generateId(),
+        content: data.content,
+        tags: data.tags.filter(t => t.trim()),
+        pinned: false,
+        createdAt: new Date().toISOString(),
+      };
+      const created = await dataApi.createInspiration(newInspiration);
+      updateData('inspirations', 'create', created);
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleTogglePin = (id) => {
-    setInspirations(inspirations.map(i =>
-      i.id === id ? { ...i, pinned: !i.pinned } : i
-    ));
+  const handleTogglePin = async (id) => {
+    const inspiration = inspirations.find(i => i.id === id);
+    if (inspiration) {
+      setSaving(true);
+      try {
+        const updated = await dataApi.updateInspiration(id, { ...inspiration, pinned: !inspiration.pinned });
+        updateData('inspirations', 'update', updated);
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
-  const handleDelete = (id) => {
-    setInspirations(inspirations.filter(i => i.id !== id));
+  const handleDelete = async (id) => {
+    setSaving(true);
+    try {
+      await dataApi.deleteInspiration(id);
+      updateData('inspirations', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleConvertToPlan = (inspiration) => {
@@ -67,6 +97,7 @@ export function Inspiration() {
 
   return (
     <div className="min-h-screen pb-20">
+      {saving && <SavingOverlay />}
       <header className="page-header">
         <h1>热点灵感</h1>
         <p className="subtitle">记录创作灵感，紧跟热点话题</p>

@@ -1,0 +1,251 @@
+import express from 'express';
+import { getDb } from '../models/db.js';
+import { authenticate } from '../middleware/auth.js';
+
+const router = express.Router();
+
+router.use(authenticate);
+
+router.get('/', (req, res) => {
+  const db = getDb();
+  
+  const plans = db.prepare(
+    'SELECT * FROM plans WHERE userId = ? ORDER BY createdAt DESC'
+  ).all(req.userId);
+  
+  const tasks = db.prepare(
+    'SELECT * FROM tasks WHERE userId = ? ORDER BY createdAt DESC'
+  ).all(req.userId);
+  
+  const inspirations = db.prepare(
+    'SELECT * FROM inspirations WHERE userId = ? ORDER BY createdAt DESC'
+  ).all(req.userId);
+
+  res.json({
+    plans: plans.map(p => ({
+      ...p,
+      platforms: p.platforms ? JSON.parse(p.platforms) : []
+    })),
+    tasks: tasks.map(t => ({
+      ...t,
+      completed: Boolean(t.completed)
+    })),
+    inspirations: inspirations.map(i => ({
+      ...i,
+      pinned: Boolean(i.pinned),
+      tags: i.tags ? JSON.parse(i.tags) : []
+    }))
+  });
+});
+
+router.post('/plans', (req, res) => {
+  const db = getDb();
+  const { id, title, startDate, endDate, progress, platforms, status } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    INSERT INTO plans (id, userId, title, startDate, endDate, progress, platforms, status, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, req.userId, title, startDate, endDate, progress || '创意', 
+         platforms ? JSON.stringify(platforms) : '[]', status || 'pending', now, now);
+
+  const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'plan', 
+    action: 'create', 
+    data: { 
+      ...plan, 
+      platforms: plan.platforms ? JSON.parse(plan.platforms) : [] 
+    },
+    userId: req.userId 
+  });
+
+  res.json({ ...plan, platforms: plan.platforms ? JSON.parse(plan.platforms) : [] });
+});
+
+router.put('/plans/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  const { title, startDate, endDate, progress, platforms, status } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    UPDATE plans SET title = ?, startDate = ?, endDate = ?, progress = ?, 
+    platforms = ?, status = ?, updatedAt = ? 
+    WHERE id = ? AND userId = ?
+  `).run(title, startDate, endDate, progress, platforms ? JSON.stringify(platforms) : '[]',
+         status, now, id, req.userId);
+
+  const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'plan', 
+    action: 'update', 
+    data: { 
+      ...plan, 
+      platforms: plan.platforms ? JSON.parse(plan.platforms) : [] 
+    },
+    userId: req.userId 
+  });
+
+  res.json({ ...plan, platforms: plan.platforms ? JSON.parse(plan.platforms) : [] });
+});
+
+router.delete('/plans/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  
+  db.prepare('DELETE FROM plans WHERE id = ? AND userId = ?').run(id, req.userId);
+  
+  req.io.emit('dataChange', { 
+    type: 'plan', 
+    action: 'delete', 
+    data: { id },
+    userId: req.userId 
+  });
+
+  res.json({ success: true });
+});
+
+router.post('/tasks', (req, res) => {
+  const db = getDb();
+  const { id, title, category } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    INSERT INTO tasks (id, userId, title, category, completed, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, 0, ?, ?)
+  `).run(id, req.userId, title, category || 'core', now, now);
+
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'task', 
+    action: 'create', 
+    data: { ...task, completed: false },
+    userId: req.userId 
+  });
+
+  res.json({ ...task, completed: false });
+});
+
+router.put('/tasks/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  const { title, category, completed } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    UPDATE tasks SET title = ?, category = ?, completed = ?, updatedAt = ? 
+    WHERE id = ? AND userId = ?
+  `).run(title, category, completed ? 1 : 0, now, id, req.userId);
+
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'task', 
+    action: 'update', 
+    data: { ...task, completed: Boolean(task.completed) },
+    userId: req.userId 
+  });
+
+  res.json({ ...task, completed: Boolean(task.completed) });
+});
+
+router.delete('/tasks/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  
+  db.prepare('DELETE FROM tasks WHERE id = ? AND userId = ?').run(id, req.userId);
+  
+  req.io.emit('dataChange', { 
+    type: 'task', 
+    action: 'delete', 
+    data: { id },
+    userId: req.userId 
+  });
+
+  res.json({ success: true });
+});
+
+router.post('/inspirations', (req, res) => {
+  const db = getDb();
+  const { id, content, tags } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    INSERT INTO inspirations (id, userId, content, tags, pinned, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, 0, ?, ?)
+  `).run(id, req.userId, content, tags ? JSON.stringify(tags) : '[]', now, now);
+
+  const inspiration = db.prepare('SELECT * FROM inspirations WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'inspiration', 
+    action: 'create', 
+    data: { 
+      ...inspiration, 
+      pinned: false, 
+      tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+    },
+    userId: req.userId 
+  });
+
+  res.json({ ...inspiration, pinned: false, tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] });
+});
+
+router.put('/inspirations/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  const { content, tags, pinned } = req.body;
+  
+  const now = new Date().toISOString();
+  
+  db.prepare(`
+    UPDATE inspirations SET content = ?, tags = ?, pinned = ?, updatedAt = ? 
+    WHERE id = ? AND userId = ?
+  `).run(content, tags ? JSON.stringify(tags) : '[]', pinned ? 1 : 0, now, id, req.userId);
+
+  const inspiration = db.prepare('SELECT * FROM inspirations WHERE id = ?').get(id);
+  
+  req.io.emit('dataChange', { 
+    type: 'inspiration', 
+    action: 'update', 
+    data: { 
+      ...inspiration, 
+      pinned: Boolean(inspiration.pinned), 
+      tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+    },
+    userId: req.userId 
+  });
+
+  res.json({ 
+    ...inspiration, 
+    pinned: Boolean(inspiration.pinned), 
+    tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+  });
+});
+
+router.delete('/inspirations/:id', (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  
+  db.prepare('DELETE FROM inspirations WHERE id = ? AND userId = ?').run(id, req.userId);
+  
+  req.io.emit('dataChange', { 
+    type: 'inspiration', 
+    action: 'delete', 
+    data: { id },
+    userId: req.userId 
+  });
+
+  res.json({ success: true });
+});
+
+export default router;

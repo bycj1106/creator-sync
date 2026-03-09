@@ -1,7 +1,18 @@
-import { useState, useRef } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useState } from 'react';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
+import { dataApi } from '../services/api';
+
+function SavingOverlay() {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
+      <div className="bg-white rounded-2xl p-4 flex items-center gap-3">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 font-medium">保存中...</p>
+      </div>
+    </div>
+  );
+}
 
 const progressSteps = ['创意', '脚本', '拍摄', '剪辑', '发布'];
 
@@ -19,12 +30,11 @@ const statusConfig = {
   '发布': { label: '已发布', color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
 };
 
-export function Planning() {
-  const [plans, setPlans] = useLocalStorage('creator-sync-plans', []);
+export function Planning({ data: plans = [], updateData }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
-  const scrollRef = useRef(null);
+  const [saving, setSaving] = useState(false);
   
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -40,11 +50,6 @@ export function Planning() {
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : null;
   const selectedPlans = selectedDate ? getPlansForDate(selectedDate) : [];
-
-  const upcomingPlans = plans
-    .filter(p => p.status !== 'published')
-    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-    .slice(0, 3);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -80,30 +85,52 @@ export function Planning() {
     setIsModalOpen(true);
   };
 
-  const handleSavePlan = (data) => {
-    if (editingPlan) {
-      setPlans(plans.map(p => p.id === editingPlan.id ? { ...p, ...data } : p));
-    } else {
-      const newPlan = {
-        id: generateId(),
-        ...data,
-        startDate: data.startDate || formatDate(today),
-        endDate: data.endDate || formatDate(today),
-        progress: '创意',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      setPlans([...plans, newPlan]);
+  const handleSavePlan = async (data) => {
+    setSaving(true);
+    try {
+      if (editingPlan) {
+        const updated = await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
+        updateData('plans', 'update', updated);
+      } else {
+        const newPlan = {
+          id: generateId(),
+          ...data,
+          startDate: data.startDate || formatDate(today),
+          endDate: data.endDate || formatDate(today),
+          progress: '创意',
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        };
+        const created = await dataApi.createPlan(newPlan);
+        updateData('plans', 'create', created);
+      }
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeletePlan = (id) => {
-    setPlans(plans.filter(p => p.id !== id));
+  const handleDeletePlan = async (id) => {
+    setSaving(true);
+    try {
+      await dataApi.deletePlan(id);
+      updateData('plans', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleProgressChange = (planId, progress) => {
-    setPlans(plans.map(p => p.id === planId ? { ...p, progress } : p));
+  const handleProgressChange = async (planId, progress) => {
+    const plan = plans.find(p => p.id === planId);
+    if (plan) {
+      setSaving(true);
+      try {
+        const updated = await dataApi.updatePlan(planId, { ...plan, progress });
+        updateData('plans', 'update', updated);
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
   const getStatusColor = (progress) => {
@@ -112,6 +139,7 @@ export function Planning() {
 
   return (
     <div className="min-h-screen pb-20">
+      {saving && <SavingOverlay />}
       <header className="page-header">
         <h1>视频规划</h1>
         <p className="subtitle">{formatDisplayDate(today)}</p>

@@ -1,43 +1,32 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Profile() {
-  const [plans] = useLocalStorage('creator-sync-plans', []);
-  const [tasks] = useLocalStorage('creator-sync-tasks', []);
-  const [inspirations] = useLocalStorage('creator-sync-inspirations', []);
+  const { user, logout } = useAuth();
   const [nickname, setNickname] = useLocalStorage('creator-sync-nickname', '创作者');
   const [isEditing, setIsEditing] = useState(false);
 
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const pendingTasks = tasks.filter(t => !t.completed).length;
-  const publishedPlans = plans.filter(p => p.progress === '发布').length;
-  const pinnedInspirations = inspirations.filter(i => i.pinned).length;
-
-  const handleClearData = () => {
-    if (confirm('确定要清除所有数据吗？此操作不可恢复。')) {
-      localStorage.removeItem('creator-sync-plans');
-      localStorage.removeItem('creator-sync-tasks');
-      localStorage.removeItem('creator-sync-inspirations');
-      window.location.reload();
-    }
-  };
-
   const stats = [
-    { label: '视频规划', value: plans.length, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
-    { label: '已完成', value: completedTasks, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
-    { label: '待办', value: pendingTasks, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
-    { label: '灵感', value: inspirations.length, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
+    { label: '视频规划', value: 0, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
+    { label: '已完成', value: 0, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
+    { label: '待办', value: 0, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
+    { label: '灵感', value: 0, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
   ];
 
   const accountItems = [
-    { icon: '👤', text: '个人资料', right: '', hasArrow: true },
+    { icon: '👤', text: '用户名', right: user?.username || '用户', hasArrow: false },
   ];
 
   const aboutItems = [
     { icon: 'ℹ️', text: '版本信息', right: 'v1.0.0', hasArrow: false },
-    { icon: '💬', text: '反馈建议', right: '', hasArrow: true },
-    { icon: '✉️', text: '联系我们', right: '', hasArrow: true },
   ];
+
+  const handleLogout = () => {
+    if (confirm('确定要退出登录吗？')) {
+      logout();
+    }
+  };
 
   return (
     <div className="min-h-screen pb-20">
@@ -105,42 +94,6 @@ export function Profile() {
 
         <div className="card">
           <div className="p-4">
-            <h3 className="section-title">数据统计</h3>
-            <div className="space-y-0">
-              <div className="list-item">
-                <div className="list-item-left">
-                  <div className="list-item-icon" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>📤</div>
-                  <span className="list-item-text">已发布视频</span>
-                </div>
-                <span className="font-semibold text-gray-900">{publishedPlans}</span>
-              </div>
-              <div className="list-item">
-                <div className="list-item-left">
-                  <div className="list-item-icon" style={{ background: 'rgba(0, 122, 255, 0.1)' }}>📝</div>
-                  <span className="list-item-text">进行中规划</span>
-                </div>
-                <span className="font-semibold text-gray-900">{plans.length - publishedPlans}</span>
-              </div>
-              <div className="list-item">
-                <div className="list-item-left">
-                  <div className="list-item-icon" style={{ background: 'rgba(255, 149, 0, 0.1)' }}>⏰</div>
-                  <span className="list-item-text">待办任务</span>
-                </div>
-                <span className="font-semibold text-gray-900">{pendingTasks}</span>
-              </div>
-              <div className="list-item">
-                <div className="list-item-left">
-                  <div className="list-item-icon" style={{ background: 'rgba(175, 82, 222, 0.1)' }}>📌</div>
-                  <span className="list-item-text">置顶灵感</span>
-                </div>
-                <span className="font-semibold text-gray-900">{pinnedInspirations}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="p-4">
             <h3 className="section-title">账号</h3>
             <div className="space-y-0">
               {accountItems.map((item, idx) => (
@@ -188,14 +141,14 @@ export function Profile() {
         </div>
 
         <button
-          onClick={handleClearData}
+          onClick={handleLogout}
           className="w-full py-4 text-red-500 font-medium transition-colors flex items-center justify-center gap-2"
           style={{ background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px' }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          清除所有数据
+          退出登录
         </button>
 
         <p className="text-center text-xs text-gray-400 mt-6 pb-4">
