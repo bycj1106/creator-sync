@@ -19,7 +19,7 @@ export function Profile() {
   ];
 
   const aboutItems = [
-    { icon: 'ℹ️', text: '版本信息', right: 'v1.0.0', hasArrow: false },
+    { icon: 'ℹ️', text: '版本信息', right: '内测中 v0.1.0', hasArrow: false },
   ];
 
   const handleLogout = () => {

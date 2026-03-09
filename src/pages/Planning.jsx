@@ -329,6 +329,7 @@ function PlanForm({ initialData, onSave, onCancel }) {
   const [startDate, setStartDate] = useState(initialData?.startDate || '');
   const [endDate, setEndDate] = useState(initialData?.endDate || '');
   const [platforms, setPlatforms] = useState(initialData?.platforms || []);
+  const [error, setError] = useState('');
 
   const togglePlatform = (p) => {
     if (platforms.includes(p)) {
@@ -340,12 +341,21 @@ function PlanForm({ initialData, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setError('请输入视频标题');
+      return;
+    }
+    setError('');
     onSave({ title, progress: initialData?.progress || '创意', startDate, endDate, platforms });
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 text-red-500 text-sm rounded-lg">
+          {error}
+        </div>
+      )}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-500 mb-2">
           视频标题
@@ -353,7 +363,10 @@ function PlanForm({ initialData, onSave, onCancel }) {
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (error) setError('');
+          }}
           placeholder="输入视频标题"
           className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
