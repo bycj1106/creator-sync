@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env.production' });
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -61,6 +63,6 @@ app.use((err, req, res, _next) => {
 
 const PORT = process.env.PORT || 3001;
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

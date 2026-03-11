@@ -1,10 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const getJWT_SECRET = () => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return JWT_SECRET;
+};
 
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -16,7 +18,7 @@ export const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJWT_SECRET());
     req.userId = decoded.userId;
     req.username = decoded.username;
     next();
@@ -28,9 +30,7 @@ export const authenticate = (req, res, next) => {
 export const generateToken = (user) => {
   return jwt.sign(
     { userId: user.id, username: user.username },
-    JWT_SECRET,
+    getJWT_SECRET(),
     { expiresIn: '7d' }
   );
 };
-
-export { JWT_SECRET };
