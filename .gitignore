@@ -26,6 +26,7 @@ coverage
 server/.env
 server/.env.local
 server/.env.development.local
+server/.env.production
 
 # Deployment docs
 部署指南.md
