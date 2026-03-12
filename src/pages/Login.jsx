@@ -12,15 +12,10 @@ export function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleLocalLogin = (e) => {
-    e.preventDefault();
-    if (!username.trim()) {
-      setError('请输入用户名');
-      return;
-    }
+  const handleLocalLogin = () => {
     let user = localStorageService.getLocalUser();
-    if (!user || user.username !== username.trim()) {
-      user = localStorageService.saveLocalUser(username.trim());
+    if (!user) {
+      user = localStorageService.saveLocalUser('本地用户');
     }
     localStorage.setItem('user', JSON.stringify(user));
     if (onLogin) {
@@ -188,41 +183,19 @@ export function Login({ onLogin }) {
                 </button>
               </div>
             </>
-          ) : (
+            ) : (
             <div className="card p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">
                 本地登录
               </h2>
 
-              <form onSubmit={handleLocalLogin}>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-500 mb-2">
-                    用户名
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="输入用户名即可创建/登录"
-                    required
-                  />
-                </div>
-
-                {error && (
-                  <div className="mb-4 p-3 bg-red-50 text-red-500 text-sm rounded-lg">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full py-3 text-white rounded-xl font-medium"
-                  style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}
-                >
-                  {localStorageService.getLocalUser()?.username === username.trim() ? '登录' : '创建并登录'}
-                </button>
-              </form>
+              <button
+                onClick={handleLocalLogin}
+                className="w-full py-3 text-white rounded-xl font-medium"
+                style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}
+              >
+                直接登录
+              </button>
 
               <div className="mt-6 text-center">
                 <button

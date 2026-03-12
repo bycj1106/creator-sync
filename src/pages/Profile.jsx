@@ -62,7 +62,7 @@ export function Profile() {
   };
 
   const accountItems = [
-    { icon: '👤', text: '用户名', right: user?.username || '用户', hasArrow: false },
+    { icon: '👤', text: '用户名', right: isLocalUser ? '本地用户' : (user?.username || '用户'), hasArrow: false },
     ...(isLocalUser ? [
       { icon: '📤', text: '导出数据', hasArrow: true, onClick: handleExportData },
       { icon: '📥', text: '导入数据', hasArrow: true, onClick: handleImportData },
