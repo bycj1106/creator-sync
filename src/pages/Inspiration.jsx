@@ -4,8 +4,11 @@ import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
 import { dataApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Inspiration({ data: inspirations = [], updateData }) {
+  const { user } = useAuth();
+  const isLocalUser = user?.type === 'local';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTag, setActiveTag] = useState('all');
   const [saving, setSaving] = useState(false);
@@ -33,8 +36,12 @@ export function Inspiration({ data: inspirations = [], updateData }) {
         pinned: false,
         createdAt: new Date().toISOString(),
       };
-      const created = await dataApi.createInspiration(newInspiration);
-      updateData('inspirations', 'create', created);
+      if (isLocalUser) {
+        updateData('inspirations', 'create', newInspiration);
+      } else {
+        const created = await dataApi.createInspiration(newInspiration);
+        updateData('inspirations', 'create', created);
+      }
       setIsModalOpen(false);
     } finally {
       setSaving(false);
@@ -46,8 +53,11 @@ export function Inspiration({ data: inspirations = [], updateData }) {
     if (inspiration) {
       setSaving(true);
       try {
-        const updated = await dataApi.updateInspiration(id, { ...inspiration, pinned: !inspiration.pinned });
-        updateData('inspirations', 'update', updated);
+        const updatedData = { ...inspiration, pinned: !inspiration.pinned };
+        if (!isLocalUser) {
+          await dataApi.updateInspiration(id, updatedData);
+        }
+        updateData('inspirations', 'update', updatedData);
       } finally {
         setSaving(false);
       }
@@ -57,7 +67,14 @@ export function Inspiration({ data: inspirations = [], updateData }) {
   const handleDelete = async (id) => {
     setSaving(true);
     try {
-      await dataApi.deleteInspiration(id);
+      if (!isLocalUser) {
+        await dataApi.deleteInspiration(id);
+      }
+      updateData('inspirations', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
+  };
       updateData('inspirations', 'delete', { id });
     } finally {
       setSaving(false);

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
 import { dataApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const progressSteps = ['创意', '脚本', '拍摄', '剪辑', '发布'];
 
@@ -21,10 +22,13 @@ const statusConfig = {
 };
 
 export function Planning({ data: plans = [], updateData }) {
+  const { user } = useAuth();
+  const isLocalUser = user?.type === 'local';
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState('month');
   
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -79,7 +83,12 @@ export function Planning({ data: plans = [], updateData }) {
     setSaving(true);
     try {
       if (editingPlan) {
-        await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
+        if (isLocalUser) {
+          updateData('plans', 'update', { ...editingPlan, ...data });
+        } else {
+          await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
+          updateData('plans', 'update', { ...editingPlan, ...data });
+        }
       } else {
         const newPlan = {
           id: generateId(),
@@ -90,6 +99,45 @@ export function Planning({ data: plans = [], updateData }) {
           status: 'pending',
           createdAt: new Date().toISOString(),
         };
+        if (isLocalUser) {
+          updateData('plans', 'create', newPlan);
+        } else {
+          await dataApi.createPlan(newPlan);
+          updateData('plans', 'create', { ...newPlan, id: newPlan.id });
+        }
+      }
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePlan = async (id) => {
+    setSaving(true);
+    try {
+      if (!isLocalUser) {
+        await dataApi.deletePlan(id);
+      }
+      updateData('plans', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProgressChange = async (planId, progress) => {
+    const plan = plans.find(p => p.id === planId);
+    if (plan) {
+      setSaving(true);
+      try {
+        if (!isLocalUser) {
+          await dataApi.updatePlan(planId, { ...plan, progress });
+        }
+        updateData('plans', 'update', { ...plan, progress });
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
         await dataApi.createPlan(newPlan);
         updateData('plans', 'create', { ...newPlan, id: newPlan.id });
       }
@@ -127,34 +175,54 @@ export function Planning({ data: plans = [], updateData }) {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 lg:pb-8">
       {saving && <SavingOverlay />}
       <header className="page-header">
         <h1>视频规划</h1>
         <p className="subtitle">{formatDisplayDate(today)}</p>
       </header>
 
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 lg:p-6">
         <div className="card">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <button 
-                onClick={handlePrevMonth}
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span className="font-semibold text-gray-800">{currentYear}年{currentMonth + 1}月</span>
-              <button 
-                onClick={handleNextMonth}
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={handlePrevMonth}
+                  className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="font-semibold text-gray-800">{currentYear}年{currentMonth + 1}月</span>
+                <button 
+                  onClick={handleNextMonth}
+                  className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('month')}
+                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                    viewMode === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  月视图
+                </button>
+                <button
+                  onClick={() => setViewMode('week')}
+                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                    viewMode === 'week' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  周视图
+                </button>
+              </div>
             </div>
             
             <div className="grid grid-cols-7 gap-1 mb-2">

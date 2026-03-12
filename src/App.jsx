@@ -8,6 +8,7 @@ import { Profile } from './pages/Profile';
 import { Login } from './pages/Login';
 import { AuthContext } from './contexts/AuthContext';
 import { dataApi, setToken, getToken } from './services/api';
+import { localStorageService } from './services/localStorage';
 import { initSocket, disconnectSocket } from './services/socket';
 
 function LoadingOverlay({ message = '加载中...' }) {
@@ -23,13 +24,23 @@ function LoadingOverlay({ message = '加载中...' }) {
 
 function getInitialUser() {
   const token = getToken();
-  if (!token) return null;
+  if (!token) {
+    const localUser = localStorageService.getLocalUser();
+    if (localUser) {
+      return localUser;
+    }
+    return null;
+  }
   try {
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   } catch {
     return null;
   }
+}
+
+function isLocalUser(user) {
+  return user && user.type === 'local';
 }
 
 function AppContent() {
@@ -43,6 +54,7 @@ function AppContent() {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
+    localStorageService.clearLocalUser();
     localStorage.removeItem('user');
     socketInitialized.current = false;
     pendingUpdates.current.clear();
@@ -52,6 +64,12 @@ function AppContent() {
 
   useEffect(() => {
     if (!user) return;
+
+    if (isLocalUser(user)) {
+      const localData = localStorageService.getLocalData();
+      setData(localData);
+      return;
+    }
 
     const fetchData = async () => {
       try {
@@ -120,12 +138,18 @@ function AppContent() {
 
   const login = useCallback((userData, newToken) => {
     setUser(userData);
-    setToken(newToken);
-    navigate('/');
-    window.location.reload();
-  }, [navigate]);
+    if (newToken) {
+      setToken(newToken);
+    }
+  }, []);
 
   const updateData = (type, action, item) => {
+    if (isLocalUser(user)) {
+      const newData = localStorageService.updateLocalData(type, action, item);
+      setData(newData);
+      return;
+    }
+
     setData(prev => {
       if (type === 'plans') {
         if (action === 'create') return { ...prev, plans: [...prev.plans, item] };

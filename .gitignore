@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Package lock (use yarn or pnpm instead)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Database
 server/data.db
 

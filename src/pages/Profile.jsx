@@ -1,25 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from '../contexts/AuthContext';
+import { localStorageService } from '../services/localStorage';
 
 export function Profile() {
   const { user, logout } = useAuth();
   const [nickname, setNickname] = useLocalStorage('creator-sync-nickname', '创作者');
   const [isEditing, setIsEditing] = useState(false);
-
-  const stats = [
+  const [stats, setStats] = useState([
     { label: '视频规划', value: 0, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
     { label: '已完成', value: 0, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
     { label: '待办', value: 0, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
     { label: '灵感', value: 0, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
-  ];
+  ]);
+
+  useEffect(() => {
+    if (user?.type === 'local') {
+      const data = localStorageService.getLocalData();
+      const completedPlans = data.plans.filter(p => p.status === 'published').length;
+      const pendingTasks = data.tasks.filter(t => !t.completed).length;
+      setStats([
+        { label: '视频规划', value: data.plans.length, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
+        { label: '已完成', value: completedPlans, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
+        { label: '待办', value: pendingTasks, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
+        { label: '灵感', value: data.inspirations.length, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
+      ]);
+    }
+  }, [user]);
+
+  const isLocalUser = user?.type === 'local';
+
+  const handleExportData = () => {
+    const jsonData = localStorageService.exportData();
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `creatorsync_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const text = await file.text();
+        const success = localStorageService.importData(text);
+        if (success) {
+          alert('数据导入成功，请重新登录以加载数据');
+          logout();
+        } else {
+          alert('数据导入失败，请检查文件格式');
+        }
+      }
+    };
+    input.click();
+  };
 
   const accountItems = [
     { icon: '👤', text: '用户名', right: user?.username || '用户', hasArrow: false },
+    ...(isLocalUser ? [
+      { icon: '📤', text: '导出数据', hasArrow: true, onClick: handleExportData },
+      { icon: '📥', text: '导入数据', hasArrow: true, onClick: handleImportData },
+    ] : []),
   ];
 
   const aboutItems = [
-    { icon: 'ℹ️', text: '版本信息', right: '内测中 v0.1.0', hasArrow: false },
+    { icon: 'ℹ️', text: '版本信息', right: 'v1.1.0', hasArrow: false },
+    { icon: '☁️', text: '账号类型', right: isLocalUser ? '本地账号' : '云端账号', hasArrow: false },
   ];
 
   const handleLogout = () => {
@@ -97,7 +149,12 @@ export function Profile() {
             <h3 className="section-title">账号</h3>
             <div className="space-y-0">
               {accountItems.map((item, idx) => (
-                <div key={idx} className="list-item">
+                <div 
+                  key={idx} 
+                  className="list-item"
+                  onClick={item.onClick}
+                  style={{ cursor: item.onClick ? 'pointer' : 'default' }}
+                >
                   <div className="list-item-left">
                     <span className="text-lg">{item.icon}</span>
                     <span className="list-item-text">{item.text}</span>

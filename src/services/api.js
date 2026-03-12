@@ -40,10 +40,10 @@ const fetchApi = async (endpoint, options = {}) => {
 };
 
 export const authApi = {
-  register: (username, password) => 
+  register: (username, password, invitationCode) => 
     fetchApi('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, invitationCode }),
     }),
 
   login: (username, password) => 

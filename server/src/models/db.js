@@ -12,8 +12,20 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
     createdAt TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS invitation_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    maxUses INTEGER DEFAULT 1,
+    usedCount INTEGER DEFAULT 0,
+    expiresAt TEXT,
+    createdAt TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_invitation_codes_code ON invitation_codes(code);
 
   CREATE TABLE IF NOT EXISTS plans (
     id TEXT PRIMARY KEY,

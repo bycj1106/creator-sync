@@ -3,6 +3,7 @@ import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
 import { dataApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const categories = [
   { id: 'all', label: '全部' },
@@ -12,6 +13,8 @@ const categories = [
 ];
 
 export function Tasks({ data: tasks = [], updateData }) {
+  const { user } = useAuth();
+  const isLocalUser = user?.type === 'local';
   const [activeCategory, setActiveCategory] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,6 +38,45 @@ export function Tasks({ data: tasks = [], updateData }) {
         completed: false,
         createdAt: new Date().toISOString(),
       };
+      if (isLocalUser) {
+        updateData('tasks', 'create', newTask);
+      } else {
+        const created = await dataApi.createTask(newTask);
+        updateData('tasks', 'create', created);
+      }
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleComplete = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      setSaving(true);
+      try {
+        const updatedData = { ...task, completed: !task.completed };
+        if (!isLocalUser) {
+          await dataApi.updateTask(id, updatedData);
+        }
+        updateData('tasks', 'update', updatedData);
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  const handleDeleteTask = async (id) => {
+    setSaving(true);
+    try {
+      if (!isLocalUser) {
+        await dataApi.deleteTask(id);
+      }
+      updateData('tasks', 'delete', { id });
+    } finally {
+      setSaving(false);
+    }
+  };
       const created = await dataApi.createTask(newTask);
       updateData('tasks', 'create', created);
       setIsModalOpen(false);
