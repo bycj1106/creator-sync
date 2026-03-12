@@ -47,7 +47,6 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const db = getDb();
     const insertUser = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
     const updateInvite = db.prepare('UPDATE invitation_codes SET usedCount = usedCount + 1 WHERE id = ?');
 
@@ -98,8 +97,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    const message = error.message || error.toString();
-    res.status(500).json({ error: '登录失败: ' + message });
+    res.status(500).json({ error: '登录失败' });
   }
 });
 

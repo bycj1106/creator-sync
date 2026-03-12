@@ -27,7 +27,7 @@ const fetchApi = async (endpoint, options = {}) => {
       ...options,
       headers,
     });
-  } catch (err) {
+  } catch {
     throw new Error('无法连接到服务器，请检查网络或服务是否启动');
   }
 

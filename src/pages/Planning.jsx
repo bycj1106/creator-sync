@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
@@ -28,7 +28,6 @@ export function Planning({ data: plans = [], updateData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState('month');
   
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -172,24 +171,6 @@ export function Planning({ data: plans = [], updateData }) {
                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode('month')}
-                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                    viewMode === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  月视图
-                </button>
-                <button
-                  onClick={() => setViewMode('week')}
-                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                    viewMode === 'week' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  周视图
                 </button>
               </div>
             </div>

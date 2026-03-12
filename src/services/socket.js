@@ -15,7 +15,6 @@ export const initSocket = (onDataChange) => {
   });
 
   socket.on('connect', () => {
-    console.log('Socket connected');
     const token = getToken();
     if (token) {
       socket.emit('authenticate', token);
@@ -23,14 +22,12 @@ export const initSocket = (onDataChange) => {
   });
 
   socket.on('dataChange', (data) => {
-    console.log('Data changed:', data);
     if (dataChangeCallback) {
       dataChangeCallback(data);
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('Socket disconnected');
   });
 
   dataChangeCallback = onDataChange;

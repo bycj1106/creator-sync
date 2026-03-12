@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { authApi, setToken } from '../services/api';
 import { localStorageService } from '../services/localStorage';
 
@@ -12,11 +11,6 @@ export function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const navigate = useNavigate();
-
-  const existingLocalUser = useMemo(() => {
-    return localStorageService.getLocalUser()?.username === username.trim() ? username.trim() : null;
-  }, [username]);
 
   const handleLocalLogin = (e) => {
     e.preventDefault();

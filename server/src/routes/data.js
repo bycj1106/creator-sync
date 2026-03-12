@@ -4,6 +4,15 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const parseJSON = (str, defaultValue = null) => {
+  if (!str) return defaultValue;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return defaultValue;
+  }
+};
+
 router.use(authenticate);
 
 router.get('/', (req, res) => {
@@ -24,7 +33,7 @@ router.get('/', (req, res) => {
   res.json({
     plans: plans.map(p => ({
       ...p,
-      platforms: p.platforms ? JSON.parse(p.platforms) : []
+      platforms: parseJSON(p.platforms, [])
     })),
     tasks: tasks.map(t => ({
       ...t,
@@ -33,7 +42,7 @@ router.get('/', (req, res) => {
     inspirations: inspirations.map(i => ({
       ...i,
       pinned: Boolean(i.pinned),
-      tags: i.tags ? JSON.parse(i.tags) : []
+      tags: parseJSON(i.tags, [])
     }))
   });
 });
@@ -95,12 +104,12 @@ router.post('/plans', (req, res) => {
     action: 'create', 
     data: { 
       ...plan, 
-      platforms: plan.platforms ? JSON.parse(plan.platforms) : [] 
+      platforms: parseJSON(plan.platforms, []) 
     },
     userId: req.userId 
   });
 
-  res.json({ ...plan, platforms: plan.platforms ? JSON.parse(plan.platforms) : [] });
+  res.json({ ...plan, platforms: parseJSON(plan.platforms, []) });
 });
 
 router.put('/plans/:id', (req, res) => {
@@ -124,12 +133,12 @@ router.put('/plans/:id', (req, res) => {
     action: 'update', 
     data: { 
       ...plan, 
-      platforms: plan.platforms ? JSON.parse(plan.platforms) : [] 
+      platforms: parseJSON(plan.platforms, []) 
     },
     userId: req.userId 
   });
 
-  res.json({ ...plan, platforms: plan.platforms ? JSON.parse(plan.platforms) : [] });
+  res.json({ ...plan, platforms: parseJSON(plan.platforms, []) });
 });
 
 router.delete('/plans/:id', (req, res) => {
@@ -240,12 +249,12 @@ router.post('/inspirations', (req, res) => {
     data: { 
       ...inspiration, 
       pinned: false, 
-      tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+      tags: parseJSON(inspiration.tags, []) 
     },
     userId: req.userId 
   });
 
-  res.json({ ...inspiration, pinned: false, tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] });
+  res.json({ ...inspiration, pinned: false, tags: parseJSON(inspiration.tags, []) });
 });
 
 router.put('/inspirations/:id', (req, res) => {
@@ -268,7 +277,7 @@ router.put('/inspirations/:id', (req, res) => {
     data: { 
       ...inspiration, 
       pinned: Boolean(inspiration.pinned), 
-      tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+      tags: parseJSON(inspiration.tags, []) 
     },
     userId: req.userId 
   });
@@ -276,7 +285,7 @@ router.put('/inspirations/:id', (req, res) => {
   res.json({ 
     ...inspiration, 
     pinned: Boolean(inspiration.pinned), 
-    tags: inspiration.tags ? JSON.parse(inspiration.tags) : [] 
+    tags: parseJSON(inspiration.tags, []) 
   });
 });
 

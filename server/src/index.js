@@ -35,7 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.warn('Client connected:', socket.id);
 
   socket.on('authenticate', async (token) => {
     try {
@@ -44,14 +44,14 @@ io.on('connection', (socket) => {
       const decoded = jwt.default.verify(token, JWT_SECRET);
       socket.userId = decoded.userId;
       socket.join(`user_${decoded.userId}`);
-      console.log(`User ${decoded.username} authenticated`);
+      console.warn(`User ${decoded.username} authenticated`);
     } catch {
-      console.log('Socket authentication failed');
+      console.warn('Socket authentication failed');
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    console.warn('Client disconnected:', socket.id);
   });
 });
 
@@ -64,5 +64,5 @@ app.use((err, req, res, _next) => {
 const PORT = process.env.PORT || 3001;
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.warn(`Server running on http://localhost:${PORT}`);
 });

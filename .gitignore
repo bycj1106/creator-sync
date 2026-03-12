@@ -34,7 +34,6 @@ server/.env.development.local
 server/.env.production
 
 # Deployment docs
-部署指南.md
 
 # Editor directories and files
 .vscode/*
