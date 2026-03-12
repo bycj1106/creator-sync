@@ -86,6 +86,21 @@ npm install
 cd ..
 ```
 
+### 环境配置
+
+```bash
+# 复制环境变量配置文件
+cp server/.env.example server/.env
+```
+
+编辑 `server/.env` 文件，配置以下必需项：
+
+| 变量 | 说明 | 示例 |
+|------|------|------|
+| `JWT_SECRET` | JWT 密钥（必需） | 使用 `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` 生成 |
+| `PORT` | 服务端口（可选，默认 3001） | `3001` |
+| `CORS_ORIGIN` | CORS 允许的来源（可选） | `*` 或具体域名 |
+
 ### 启动开发服务器
 
 ```bash
@@ -205,6 +220,21 @@ creator-sync/
 
 ## 部署指南
 
+### 生产环境配置
+
+```bash
+# 复制生产环境配置文件
+cp server/.env.production server/.env
+```
+
+编辑 `server/.env` 文件，配置以下项：
+
+| 变量 | 说明 | 示例 |
+|------|------|------|
+| `JWT_SECRET` | JWT 密钥（必需） | 使用 `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` 生成 |
+| `PORT` | 服务端口 | `3001` |
+| `CORS_ORIGIN` | CORS 允许的来源（建议填入实际域名） | `https://your-domain.com` |
+
 ### 后端部署
 
 ```bash
@@ -295,14 +325,14 @@ npm run lint
 ## 常见问题
 
 ### Q: 如何修改后端端口？
-编辑 `server/.env.production` 中的 `PORT` 值。
+编辑 `server/.env` 中的 `PORT` 值。
 
 ### Q: 如何修改数据库位置？
 编辑 `server/src/models/db.js` 中的 `dbPath`。
 
 ### Q: APP 无法连接服务器？
 1. 检查服务器防火墙是否开放端口
-2. 检查 `.env.production` 中的 API 地址是否正确
+2. 检查前端 `.env.development` 中的 API 地址是否正确
 
 ### Q: 如何备份数据？
 复制 `server/data.db` 文件即可。
