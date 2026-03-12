@@ -73,7 +73,8 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: '登录失败' });
+    const message = error.message || error.toString();
+    res.status(500).json({ error: '登录失败: ' + message });
   }
 });
 

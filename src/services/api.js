@@ -21,10 +21,15 @@ const fetchApi = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    throw new Error('无法连接到服务器，请检查网络或服务是否启动');
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: '请求失败' }));

@@ -222,11 +222,6 @@ creator-sync/
 
 ### 生产环境配置
 
-```bash
-# 复制生产环境配置文件
-cp server/.env.production server/.env
-```
-
 编辑 `server/.env` 文件，配置以下项：
 
 | 变量 | 说明 | 示例 |
@@ -332,7 +327,7 @@ npm run lint
 
 ### Q: APP 无法连接服务器？
 1. 检查服务器防火墙是否开放端口
-2. 检查前端 `.env.development` 中的 API 地址是否正确
+2. 检查前端 `.env` 中的 API 地址是否正确
 
 ### Q: 如何备份数据？
 复制 `server/data.db` 文件即可。
