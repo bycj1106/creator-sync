@@ -5,61 +5,83 @@
   <img src="https://img.shields.io/badge/Node.js-Express-brightgreen" alt="Node.js">
   <img src="https://img.shields.io/badge/SQLite-Database-orange" alt="SQLite">
   <img src="https://img.shields.io/badge/WebSocket-Real--time-blueviolet" alt="WebSocket">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
 
 CreatorSync 是一款专为内容创作者打造的内容管理工具，帮助创作者规划视频内容、管理待办事项、记录创作灵感，支持多用户数据同步。
 
 ---
 
+## 📑 目录
+
+- [功能特性](#功能特性)
+- [技术栈](#技术栈)
+- [快速上手](#快速上手)
+- [项目结构](#项目结构)
+- [操作手册](#操作手册)
+- [部署指南](#部署指南)
+- [API 接口](#api-接口)
+- [开发指南](#开发指南)
+- [常见问题](#常见问题)
+- [贡献指南](#贡献指南)
+
+---
+
 ## 功能特性
 
 ### 📹 视频规划
-- 日历视图展示视频发布时间线
-- 支持设置视频标题、开始/结束日期
-- 制作进度管理（创意→脚本→拍摄→剪辑→发布）
-- 多平台发布支持（YouTube、TikTok、Bilibili）
+- 📅 日历视图展示视频发布时间线
+- ✏️ 支持设置视频标题、开始/结束日期
+- 📊 制作进度管理（创意→脚本→拍摄→剪辑→发布）
+- 🌐 多平台发布支持（YouTube、TikTok、Bilibili）
 
 ### ✅ 待办清单
-- 任务分类管理（视频相关、日常运营）
-- 进度百分比展示
-- 快速标记完成状态
+- 📂 任务分类管理（视频相关、日常运营）
+- 📈 进度百分比展示
+- ✔️ 快速标记完成状态
 
 ### 💡 热点灵感
-- 快速记录创作灵感
-- 标签分类管理
-- 一键转为视频规划
+- ✨ 快速记录创作灵感
+- 🏷️ 标签分类管理
+- 🔄 一键转为视频规划
 
 ### 👥 多用户支持
-- 用户注册/登录
-- 实时数据同步
-- WebSocket 实时推送更新
+- 🔐 用户注册/登录
+- 🔁 实时数据同步
+- ⚡ WebSocket 实时推送更新
 
 ### 📱 APP 支持
-- 支持打包为 Android/iOS APP
-- 跨平台数据同步
+- 📲 支持打包为 Android/iOS APP
+- ☁️ 跨平台数据同步
 
 ---
 
 ## 技术栈
 
 ### 前端
-- **React 19** - UI 框架
-- **React Router** - 路由管理
-- **Vite** - 构建工具
-- **Tailwind CSS** - 样式框架
-- **Socket.io Client** - 实时通信
+| 技术 | 说明 |
+|------|------|
+| [React 19](https://react.dev/) | UI 框架 |
+| [React Router](https://reactrouter.com/) | 路由管理 |
+| [Vite](https://vitejs.dev/) | 构建工具 |
+| [Tailwind CSS](https://tailwindcss.com/) | 样式框架 |
+| [Socket.io Client](https://socket.io/) | 实时通信 |
 
 ### 后端
-- **Node.js** - 运行时
-- **Express** - Web 框架
-- **SQLite** - 轻量级数据库
-- **Socket.io** - WebSocket 服务
-- **JWT** - 用户认证
+| 技术 | 说明 |
+|------|------|
+| [Node.js](https://nodejs.org/) | 运行时 |
+| [Express](https://expressjs.com/) | Web 框架 |
+| [SQLite](https://www.sqlite.org/) | 轻量级数据库 |
+| [Socket.io](https://socket.io/) | WebSocket 服务 |
+| [JWT](https://jwt.io/) | 用户认证 |
 
 ### 开发工具
-- **ESLint** - 代码检查
-- **Vitest** - 单元测试
-- **Capacitor** - 跨平台打包
+| 技术 | 说明 |
+|------|------|
+| [ESLint](https://eslint.org/) | 代码检查 |
+| [Vitest](https://vitest.dev/) | 单元测试 |
+| [Capacitor](https://capacitorjs.com/) | 跨平台打包 |
 
 ---
 
@@ -93,13 +115,7 @@ cd ..
 cp server/.env.example server/.env
 ```
 
-编辑 `server/.env` 文件，配置以下必需项：
-
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| `JWT_SECRET` | JWT 密钥（必需） | 使用 `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` 生成 |
-| `PORT` | 服务端口（可选，默认 3001） | `3001` |
-| `CORS_ORIGIN` | CORS 允许的来源（可选） | `*` 或具体域名 |
+编辑 `server/.env` 文件，配置必要参数。详见 [部署指南](#部署指南)。
 
 ### 启动开发服务器
 
@@ -120,49 +136,63 @@ npm run dev
 
 ```
 creator-sync/
-├── src/                    # 前端源代码
-│   ├── components/         # 公共组件
-│   │   ├── Layout.jsx      # 布局组件
-│   │   ├── Modal.jsx       # 弹窗组件
-│   │   ├── TabBar.jsx      # 标签栏
-│   │   └── UI.jsx          # UI 组件库
-│   ├── contexts/           # React Context
-│   │   └── AuthContext.jsx # 认证上下文
-│   ├── hooks/              # 自定义 Hooks
-│   │   └── useLocalStorage.js
-│   ├── pages/              # 页面组件
-│   │   ├── Planning.jsx     # 视频规划
-│   │   ├── Tasks.jsx       # 待办清单
-│   │   ├── Inspiration.jsx  # 热点灵感
-│   │   ├── Profile.jsx     # 个人中心
-│   │   └── Login.jsx       # 登录/注册
-│   ├── services/           # API 服务
-│   │   ├── api.js          # HTTP 请求
-│   │   └── socket.js       # WebSocket
-│   ├── test/               # 单元测试
-│   ├── types/              # 类型定义
-│   ├── utils/              # 工具函数
-│   │   └── date.js
-│   ├── App.jsx             # 根组件
-│   └── main.jsx            # 入口文件
+├── src/                         # 前端源代码
+│   ├── components/              # 公共组件
+│   │   ├── Layout.jsx           # 布局组件
+│   │   ├── Modal.jsx            # 弹窗组件
+│   │   ├── TabBar.jsx           # 标签栏
+│   │   └── UI.jsx               # UI 组件库
+│   ├── contexts/                # React Context
+│   │   └── AuthContext.jsx      # 认证上下文
+│   ├── hooks/                   # 自定义 Hooks
+│   │   └── useLocalStorage.js   # 本地存储 Hook
+│   ├── pages/                   # 页面组件
+│   │   ├── Planning.jsx         # 视频规划
+│   │   ├── Tasks.jsx            # 待办清单
+│   │   ├── Inspiration.jsx      # 热点灵感
+│   │   ├── Profile.jsx          # 个人中心
+│   │   └── Login.jsx            # 登录/注册
+│   ├── services/                # API 服务
+│   │   ├── api.js               # HTTP 请求
+│   │   └── socket.js            # WebSocket
+│   ├── test/                    # 单元测试
+│   ├── types/                   # 类型定义
+│   ├── utils/                   # 工具函数
+│   │   └── date.js              # 日期工具
+│   ├── App.jsx                  # 根组件
+│   └── main.jsx                 # 入口文件
 │
-├── server/                 # 后端服务
+├── server/                      # 后端服务
 │   └── src/
-│       ├── middleware/      # 中间件
-│       │   └── auth.js     # JWT 认证
-│       ├── models/         # 数据模型
-│       │   └── db.js       # SQLite 配置
-│       ├── routes/         # 路由
-│       │   ├── auth.js     # 认证接口
-│       │   └── data.js     # 数据接口
-│       └── index.js        # 服务入口
+│       ├── middleware/          # 中间件
+│       │   └── auth.js          # JWT 认证
+│       ├── models/              # 数据模型
+│       │   └── db.js            # SQLite 配置
+│       ├── routes/              # 路由
+│       │   ├── auth.js          # 认证接口
+│       │   └── data.js          # 数据接口
+│       └── index.js             # 服务入口
 │
-├── android/                # Android 原生项目
-├── dist/                  # 生产构建产物
-├── capacitor.config.json   # Capacitor 配置
-├── vite.config.js          # Vite 配置
-└── package.json            # 项目配置
+├── android/                     # Android 原生项目
+├── dist/                       # 生产构建产物
+├── capacitor.config.json       # Capacitor 配置
+├── vite.config.js              # Vite 配置
+└── package.json                 # 项目配置
 ```
+
+### 目录说明
+
+| 目录 | 说明 |
+|------|------|
+| `src/components` | 可复用的 UI 组件 |
+| `src/contexts` | React 上下文，用于全局状态管理 |
+| `src/hooks` | 自定义 Hooks，封装复用逻辑 |
+| `src/pages` | 页面级组件，对应路由页面 |
+| `src/services` | API 服务层，处理网络请求 |
+| `src/utils` | 工具函数库 |
+| `server/src/middleware` | Express 中间件 |
+| `server/src/models` | 数据模型和数据库操作 |
+| `server/src/routes` | API 路由定义 |
 
 ---
 
@@ -244,6 +274,9 @@ pm2 status
 
 # 查看日志
 pm2 logs creator-sync
+
+# 重启服务
+pm2 restart creator-sync
 ```
 
 ### 前端部署
@@ -252,13 +285,74 @@ pm2 logs creator-sync
 # 构建生产版本
 npm run build
 
-# 预览
+# 预览构建结果
 npm run preview
 ```
 
+构建产物位于 `dist/` 目录，可部署到任意静态服务器。
+
 ### 打包 APP
 
-详见 [部署指南.md](./部署指南.md)
+使用 Capacitor 将应用打包为 Android/iOS APP：
+
+```bash
+# 安装 Capacitor CLI（如果未安装）
+npm install -g @capacitor/cli
+
+# 初始化 Capacitor（首次使用）
+npx cap init
+
+# 添加平台
+npx cap add android
+npx cap add ios
+
+# 同步代码到原生项目
+npx cap sync
+
+# 打开 Android Studio 进行打包
+npx cap open android
+
+# 或者在命令行构建 APK
+cd android
+./gradlew assembleDebug
+```
+
+### Nginx 配置示例
+
+如果您使用 Nginx 作为反向代理：
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # 前端静态文件
+    location / {
+        root /path/to/creator-sync/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API 代理
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # WebSocket 代理
+    location /socket.io {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
 
 ---
 
@@ -266,25 +360,41 @@ npm run preview
 
 ### 认证接口
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/auth/register | 用户注册 |
-| POST | /api/auth/login | 用户登录 |
+| 方法 | 路径 | 说明 | 请求体 |
+|------|------|------|--------|
+| POST | /api/auth/register | 用户注册 | `{ username, password }` |
+| POST | /api/auth/login | 用户登录 | `{ username, password }` |
 
 ### 数据接口
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | /api/data | 获取用户所有数据 |
-| POST | /api/data/plans | 创建视频规划 |
-| PUT | /api/data/plans/:id | 更新视频规划 |
-| DELETE | /api/data/plans/:id | 删除视频规划 |
-| POST | /api/data/tasks | 创建待办任务 |
-| PUT | /api/data/tasks/:id | 更新待办任务 |
-| DELETE | /api/data/tasks/:id | 删除待办任务 |
-| POST | /api/data/inspirations | 创建灵感 |
-| PUT | /api/data/inspirations/:id | 更新灵感 |
-| DELETE | /api/data/inspirations/:id | 删除灵感 |
+#### 视频规划
+
+| 方法 | 路径 | 说明 | 请求体 |
+|------|------|------|--------|
+| GET | /api/data/plans | 获取所有规划 | - |
+| POST | /api/data/plans | 创建规划 | `{ title, startDate, endDate, platforms, status }` |
+| PUT | /api/data/plans/:id | 更新规划 | `{ title, startDate, endDate, platforms, status }` |
+| DELETE | /api/data/plans/:id | 删除规划 | - |
+
+#### 待办任务
+
+| 方法 | 路径 | 说明 | 请求体 |
+|------|------|------|--------|
+| GET | /api/data/tasks | 获取所有任务 | - |
+| POST | /api/data/tasks | 创建任务 | `{ content, category, progress }` |
+| PUT | /api/data/tasks/:id | 更新任务 | `{ content, category, progress, completed }` |
+| DELETE | /api/data/tasks/:id | 删除任务 | - |
+
+#### 灵感
+
+| 方法 | 路径 | 说明 | 请求体 |
+|------|------|------|--------|
+| GET | /api/data/inspirations | 获取所有灵感 | - |
+| POST | /api/data/inspirations | 创建灵感 | `{ content, tags }` |
+| PUT | /api/data/inspirations/:id | 更新灵感 | `{ content, tags, pinned }` |
+| DELETE | /api/data/inspirations/:id | 删除灵感 | - |
+
+> ⚠️ 所有数据接口需要在请求头中携带 JWT Token：`Authorization: Bearer <token>`
 
 ---
 
@@ -295,6 +405,7 @@ npm run preview
 - 使用 ESLint 进行代码检查
 - 遵循 React Hooks 规则
 - 使用有意义的变量命名
+- 推荐使用函数组件和 Hooks
 
 ### 运行测试
 
@@ -312,25 +423,57 @@ npm run test:run
 ### 代码检查
 
 ```bash
+# 运行 ESLint
 npm run lint
+
+# 修复 ESLint 自动修复的问题
+npm run lint -- --fix
 ```
+
+### 添加新的页面
+
+1. 在 `src/pages/` 目录下创建新的页面组件
+2. 在 `src/App.jsx` 中添加路由配置
+3. 如需认证保护，在路由中添加认证检查
+
+### 添加新的 API 接口
+
+1. 在 `server/src/routes/` 目录下创建或编辑路由文件
+2. 在 `server/src/index.js` 中注册路由
+3. 如需认证保护，添加 auth 中间件
 
 ---
 
 ## 常见问题
 
 ### Q: 如何修改后端端口？
-编辑 `server/.env` 中的 `PORT` 值。
+编辑 `server/.env` 中的 `PORT` 值，例如：`PORT=8080`
 
 ### Q: 如何修改数据库位置？
-编辑 `server/src/models/db.js` 中的 `dbPath`。
+编辑 `server/src/models/db.js` 中的 `dbPath` 变量。
+
+### Q: 如何备份数据？
+复制 `server/data.db` 文件即可。建议定期备份。
 
 ### Q: APP 无法连接服务器？
 1. 检查服务器防火墙是否开放端口
 2. 检查前端 `.env` 中的 API 地址是否正确
+3. 确认 CORS_ORIGIN 配置正确
 
-### Q: 如何备份数据？
-复制 `server/data.db` 文件即可。
+### Q: JWT 过期怎么办？
+用户需要重新登录。可以在客户端实现 token 刷新机制。
+
+### Q: 如何重置密码？
+目前版本不支持自助重置密码，需手动修改数据库中的用户信息。
+
+### Q: 如何查看服务器日志？
+```bash
+# PM2 日志
+pm2 logs creator-sync
+
+# 实时日志
+pm2 logs creator-sync --lines 100 --nostream
+```
 
 ---
 
@@ -344,6 +487,21 @@ npm run lint
 4. 推送分支 (`git push origin feature/xxx`)
 5. 创建 Pull Request
 
+### 开发流程
+
+```bash
+# 1. 同步最新代码
+git remote add upstream https://github.com/bycj1106/creator-sync.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# 2. 创建功能分支
+git checkout -b feature/your-feature
+
+# 3. 开发完成后，提交 PR
+```
+
 ---
 
 ## 许可证
@@ -352,4 +510,4 @@ MIT License
 
 ---
 
-<p align="center">Made with ❤️ by CreatorSync</p>
+<p align="center">Made with ❤️ by 四夕云升</p>
