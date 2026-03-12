@@ -173,8 +173,7 @@ creator-sync/
 │       │   └── data.js          # 数据接口
 │       └── index.js             # 服务入口
 │
-├── android/                     # Android 原生项目
-├── dist/                       # 生产构建产物
+├── dist/                        # 生产构建产物
 ├── capacitor.config.json       # Capacitor 配置
 ├── vite.config.js              # Vite 配置
 └── package.json                 # 项目配置

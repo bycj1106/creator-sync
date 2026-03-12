@@ -35,6 +35,7 @@ server/.env.production
 
 # Deployment docs
 docs/
+android/
 
 # Editor directories and files
 .vscode/*

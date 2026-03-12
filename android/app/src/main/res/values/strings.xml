@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">CreatorSync</string>
-    <string name="title_activity_main">CreatorSync</string>
-    <string name="package_name">com.creatorsync.app</string>
-    <string name="custom_url_scheme">com.creatorsync.app</string>
-</resources>
