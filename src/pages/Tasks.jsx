@@ -77,36 +77,6 @@ export function Tasks({ data: tasks = [], updateData }) {
       setSaving(false);
     }
   };
-      const created = await dataApi.createTask(newTask);
-      updateData('tasks', 'create', created);
-      setIsModalOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleToggleComplete = async (id) => {
-    const task = tasks.find(t => t.id === id);
-    if (task) {
-      setSaving(true);
-      try {
-        const updated = await dataApi.updateTask(id, { ...task, completed: !task.completed });
-        updateData('tasks', 'update', updated);
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
-
-  const handleDeleteTask = async (id) => {
-    setSaving(true);
-    try {
-      await dataApi.deleteTask(id);
-      updateData('tasks', 'delete', { id });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   return (
     <div className="min-h-screen pb-20">

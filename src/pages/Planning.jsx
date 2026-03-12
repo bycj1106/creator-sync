@@ -138,37 +138,6 @@ export function Planning({ data: plans = [], updateData }) {
       }
     }
   };
-        await dataApi.createPlan(newPlan);
-        updateData('plans', 'create', { ...newPlan, id: newPlan.id });
-      }
-      setIsModalOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeletePlan = async (id) => {
-    setSaving(true);
-    try {
-      await dataApi.deletePlan(id);
-      updateData('plans', 'delete', { id });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleProgressChange = async (planId, progress) => {
-    const plan = plans.find(p => p.id === planId);
-    if (plan) {
-      setSaving(true);
-      try {
-        const updated = await dataApi.updatePlan(planId, { ...plan, progress });
-        updateData('plans', 'update', updated);
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
 
   const getStatusColor = (progress) => {
     return statusConfig[progress] || statusConfig['创意'];

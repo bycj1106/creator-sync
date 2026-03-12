@@ -75,11 +75,6 @@ export function Inspiration({ data: inspirations = [], updateData }) {
       setSaving(false);
     }
   };
-      updateData('inspirations', 'delete', { id });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleConvertToPlan = (inspiration) => {
     navigate('/', { 
