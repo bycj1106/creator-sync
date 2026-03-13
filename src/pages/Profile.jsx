@@ -4,31 +4,33 @@ import { useAuth } from '../contexts/AuthContext';
 import { localStorageService } from '../services/localStorage';
 
 export function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, data, dataLoading } = useAuth();
   const [nickname, setNickname] = useLocalStorage('creator-sync-nickname', '创作者');
   const [isEditing, setIsEditing] = useState(false);
 
   const isLocalUser = user?.type === 'local';
 
   const stats = useMemo(() => {
-    if (user?.type === 'local') {
-      const data = localStorageService.getLocalData();
-      const completedPlans = data.plans.filter(p => p.status === 'published').length;
-      const pendingTasks = data.tasks.filter(t => !t.completed).length;
+    if (dataLoading && !isLocalUser) {
       return [
-        { label: '视频规划', value: data.plans.length, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
-        { label: '已完成', value: completedPlans, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
-        { label: '待办', value: pendingTasks, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
-        { label: '灵感', value: data.inspirations.length, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
+        { label: '视频规划', value: '-', color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
+        { label: '已完成', value: '-', color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
+        { label: '待办', value: '-', color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
+        { label: '灵感', value: '-', color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
       ];
     }
+    const sourceData = isLocalUser 
+      ? localStorageService.getLocalData() 
+      : (data || { plans: [], tasks: [], inspirations: [] });
+    const completedPlans = sourceData.plans.filter(p => p.status === 'published').length;
+    const pendingTasks = sourceData.tasks.filter(t => !t.completed).length;
     return [
-      { label: '视频规划', value: 0, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
-      { label: '已完成', value: 0, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
-      { label: '待办', value: 0, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
-      { label: '灵感', value: 0, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
+      { label: '视频规划', value: sourceData.plans.length, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
+      { label: '已完成', value: completedPlans, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
+      { label: '待办', value: pendingTasks, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)' },
+      { label: '灵感', value: sourceData.inspirations.length, color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
     ];
-  }, [user]);
+  }, [data, dataLoading, isLocalUser]);
 
   const handleExportData = () => {
     const jsonData = localStorageService.exportData();

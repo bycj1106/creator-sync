@@ -72,6 +72,7 @@ function AppContent() {
     }
 
     const fetchData = async () => {
+      setDataLoading(true);
       try {
         const result = await dataApi.getAll();
         setData(result);
@@ -173,7 +174,7 @@ function AppContent() {
   }
 
   return (
-    <AuthContext.Provider value={{ user, logout, dataLoading, setDataLoading }}>
+    <AuthContext.Provider value={{ user, logout, dataLoading, setDataLoading, data }}>
       {dataLoading && <LoadingOverlay message="同步数据中..." />}
       <Routes>
         <Route path="/" element={<Layout />}>
