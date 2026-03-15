@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { authApi, setToken } from '../services/api';
 import { localStorageService } from '../services/localStorage';
 
@@ -11,6 +11,22 @@ export function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const autoLoginTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoLoginTimeoutRef.current) {
+        clearTimeout(autoLoginTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showSuccess && autoLoginTimeoutRef.current) {
+      clearTimeout(autoLoginTimeoutRef.current);
+      autoLoginTimeoutRef.current = null;
+    }
+  }, [showSuccess]);
 
   const handleLocalLogin = () => {
     let user = localStorageService.getLocalUser();
@@ -38,13 +54,18 @@ export function Login({ onLogin }) {
       
       if (!isLogin) {
         setShowSuccess(true);
-        setTimeout(async () => {
-          setShowSuccess(false);
-          const loginResult = await authApi.login(username, password);
-          setToken(loginResult.token);
-          localStorage.setItem('user', JSON.stringify(loginResult.user));
-          if (onLogin) {
-            onLogin(loginResult.user, loginResult.token);
+        autoLoginTimeoutRef.current = setTimeout(async () => {
+          if (!showSuccess) return;
+          try {
+            const loginResult = await authApi.login(username, password);
+            setToken(loginResult.token);
+            localStorage.setItem('user', JSON.stringify(loginResult.user));
+            if (onLogin) {
+              onLogin(loginResult.user, loginResult.token);
+            }
+          } catch {
+            setError('自动登录失败，请手动登录');
+            setShowSuccess(false);
           }
         }, 1500);
       } else {

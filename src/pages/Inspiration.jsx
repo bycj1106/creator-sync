@@ -12,6 +12,7 @@ export function Inspiration({ data: inspirations = [], updateData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTag, setActiveTag] = useState('all');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const allTags = [...new Set(inspirations.flatMap(i => i.tags || []))];
@@ -28,6 +29,7 @@ export function Inspiration({ data: inspirations = [], updateData }) {
 
   const handleAddInspiration = async (data) => {
     setSaving(true);
+    setError('');
     try {
       const newInspiration = {
         id: generateId(),
@@ -43,6 +45,8 @@ export function Inspiration({ data: inspirations = [], updateData }) {
         updateData('inspirations', 'create', created);
       }
       setIsModalOpen(false);
+    } catch (err) {
+      setError(err.message || '添加灵感失败');
     } finally {
       setSaving(false);
     }
@@ -52,12 +56,15 @@ export function Inspiration({ data: inspirations = [], updateData }) {
     const inspiration = inspirations.find(i => i.id === id);
     if (inspiration) {
       setSaving(true);
+      setError('');
       try {
         const updatedData = { ...inspiration, pinned: !inspiration.pinned };
         if (!isLocalUser) {
           await dataApi.updateInspiration(id, updatedData);
         }
         updateData('inspirations', 'update', updatedData);
+      } catch (err) {
+        setError(err.message || '更新灵感失败');
       } finally {
         setSaving(false);
       }
@@ -66,11 +73,14 @@ export function Inspiration({ data: inspirations = [], updateData }) {
 
   const handleDelete = async (id) => {
     setSaving(true);
+    setError('');
     try {
       if (!isLocalUser) {
         await dataApi.deleteInspiration(id);
       }
       updateData('inspirations', 'delete', { id });
+    } catch (err) {
+      setError(err.message || '删除灵感失败');
     } finally {
       setSaving(false);
     }
@@ -104,6 +114,12 @@ export function Inspiration({ data: inspirations = [], updateData }) {
         <h1>热点灵感</h1>
         <p className="subtitle">记录创作灵感，紧跟热点话题</p>
       </header>
+
+      {error && (
+        <div className="mx-4 mt-2 p-3 bg-red-50 text-red-500 text-sm rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="p-4 space-y-3">
         {allTags.length > 0 && (

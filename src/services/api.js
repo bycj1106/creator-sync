@@ -27,13 +27,19 @@ const fetchApi = async (endpoint, options = {}) => {
       ...options,
       headers,
     });
-  } catch {
-    throw new Error('无法连接到服务器，请检查网络或服务是否启动');
+  } catch (networkError) {
+    throw new Error(`网络错误: ${networkError.message}`);
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: '请求失败' }));
-    throw new Error(error.error || '请求失败');
+    let errorMessage = '请求失败';
+    try {
+      const error = await response.json();
+      errorMessage = error.error || error.message || '请求失败';
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json();

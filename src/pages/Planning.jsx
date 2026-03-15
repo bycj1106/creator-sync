@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
@@ -28,12 +28,16 @@ export function Planning({ data: plans = [], updateData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  const monthDays = getMonthDays(currentYear, currentMonth);
+  const monthDays = useMemo(
+    () => getMonthDays(currentYear, currentMonth),
+    [currentYear, currentMonth]
+  );
   const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 
   const getPlansForDate = (date) => {
@@ -80,13 +84,15 @@ export function Planning({ data: plans = [], updateData }) {
 
   const handleSavePlan = async (data) => {
     setSaving(true);
+    setError('');
     try {
       if (editingPlan) {
         if (isLocalUser) {
           updateData('plans', 'update', { ...editingPlan, ...data });
         } else {
-          await dataApi.updatePlan(editingPlan.id, { ...editingPlan, ...data });
-          updateData('plans', 'update', { ...editingPlan, ...data });
+          const updatedPlan = { ...editingPlan, ...data };
+          await dataApi.updatePlan(editingPlan.id, updatedPlan);
+          updateData('plans', 'update', updatedPlan);
         }
       } else {
         const newPlan = {
@@ -101,11 +107,13 @@ export function Planning({ data: plans = [], updateData }) {
         if (isLocalUser) {
           updateData('plans', 'create', newPlan);
         } else {
-          await dataApi.createPlan(newPlan);
-          updateData('plans', 'create', { ...newPlan, id: newPlan.id });
+          const created = await dataApi.createPlan(newPlan);
+          updateData('plans', 'create', created);
         }
       }
       setIsModalOpen(false);
+    } catch (err) {
+      setError(err.message || '保存规划失败');
     } finally {
       setSaving(false);
     }
@@ -113,11 +121,14 @@ export function Planning({ data: plans = [], updateData }) {
 
   const handleDeletePlan = async (id) => {
     setSaving(true);
+    setError('');
     try {
       if (!isLocalUser) {
         await dataApi.deletePlan(id);
       }
       updateData('plans', 'delete', { id });
+    } catch (err) {
+      setError(err.message || '删除规划失败');
     } finally {
       setSaving(false);
     }
@@ -127,11 +138,14 @@ export function Planning({ data: plans = [], updateData }) {
     const plan = plans.find(p => p.id === planId);
     if (plan) {
       setSaving(true);
+      setError('');
       try {
         if (!isLocalUser) {
           await dataApi.updatePlan(planId, { ...plan, progress });
         }
         updateData('plans', 'update', { ...plan, progress });
+      } catch (err) {
+        setError(err.message || '更新进度失败');
       } finally {
         setSaving(false);
       }
@@ -149,6 +163,12 @@ export function Planning({ data: plans = [], updateData }) {
         <h1>视频规划</h1>
         <p className="subtitle">{formatDisplayDate(today)}</p>
       </header>
+
+      {error && (
+        <div className="mx-4 mt-2 p-3 bg-red-50 text-red-500 text-sm rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="p-4 space-y-3 lg:p-6">
         <div className="card">
