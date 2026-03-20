@@ -55,7 +55,6 @@ export function Login({ onLogin }) {
       if (!isLogin) {
         setShowSuccess(true);
         autoLoginTimeoutRef.current = setTimeout(async () => {
-          if (!showSuccess) return;
           try {
             const loginResult = await authApi.login(username, password);
             setToken(loginResult.token);

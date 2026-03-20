@@ -1,10 +1,37 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getDb } from '../models/db.js';
 import { generateToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_TIME = 15 * 60 * 1000;
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const attempts = loginAttempts.get(ip) || { count: 0, firstAttempt: now };
+  
+  if (now - attempts.firstAttempt > LOCKOUT_TIME) {
+    loginAttempts.set(ip, { count: 1, firstAttempt: now });
+    return { allowed: true };
+  }
+  
+  if (attempts.count >= MAX_ATTEMPTS) {
+    const remainingTime = Math.ceil((LOCKOUT_TIME - (now - attempts.firstAttempt)) / 1000);
+    return { allowed: false, remainingTime };
+  }
+  
+  loginAttempts.set(ip, { count: attempts.count + 1, firstAttempt: attempts.firstAttempt });
+  return { allowed: true };
+}
+
+function clearRateLimit(ip) {
+  loginAttempts.delete(ip);
+}
 
 router.post('/register', async (req, res) => {
   try {
@@ -70,6 +97,15 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const rateLimit = checkRateLimit(clientIp);
+    
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ 
+        error: `登录尝试次数过多，请 ${rateLimit.remainingTime} 秒后重试` 
+      });
+    }
+    
     const { username, password } = req.body;
     
     if (!username || !password) {
@@ -89,6 +125,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: '用户名或密码错误' });
     }
 
+    clearRateLimit(clientIp);
     const token = generateToken(user);
     
     res.json({
@@ -111,7 +148,10 @@ router.post('/admin/generate-invite', async (req, res) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const secret = process.env.JWT_SECRET || 'creatorsync-secret-key';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: '服务器配置错误' });
+    }
     
     let decoded;
     try {
@@ -121,13 +161,13 @@ router.post('/admin/generate-invite', async (req, res) => {
     }
 
     const db = getDb();
-    const adminUser = db.prepare('SELECT role FROM users WHERE id = ?').get(decoded.id);
+    const adminUser = db.prepare('SELECT role FROM users WHERE id = ?').get(decoded.userId);
     
     if (!adminUser || adminUser.role !== 'admin') {
       return res.status(403).json({ error: '仅管理员可执行此操作' });
     }
 
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const code = crypto.randomBytes(4).toString('hex').toUpperCase();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 

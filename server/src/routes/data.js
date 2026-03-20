@@ -117,6 +117,11 @@ router.put('/plans/:id', (req, res) => {
   const { id } = req.params;
   const { title, startDate, endDate, progress, platforms, status } = req.body;
   
+  const existing = db.prepare('SELECT id FROM plans WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '规划不存在或无权访问' });
+  }
+  
   const now = new Date().toISOString();
   
   db.prepare(`
@@ -144,6 +149,11 @@ router.put('/plans/:id', (req, res) => {
 router.delete('/plans/:id', (req, res) => {
   const db = getDb();
   const { id } = req.params;
+  
+  const existing = db.prepare('SELECT id FROM plans WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '规划不存在或无权访问' });
+  }
   
   db.prepare('DELETE FROM plans WHERE id = ? AND userId = ?').run(id, req.userId);
   
@@ -190,6 +200,11 @@ router.put('/tasks/:id', (req, res) => {
   const { id } = req.params;
   const { title, category, completed } = req.body;
   
+  const existing = db.prepare('SELECT id FROM tasks WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '任务不存在或无权访问' });
+  }
+  
   const now = new Date().toISOString();
   
   db.prepare(`
@@ -212,6 +227,11 @@ router.put('/tasks/:id', (req, res) => {
 router.delete('/tasks/:id', (req, res) => {
   const db = getDb();
   const { id } = req.params;
+  
+  const existing = db.prepare('SELECT id FROM tasks WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '任务不存在或无权访问' });
+  }
   
   db.prepare('DELETE FROM tasks WHERE id = ? AND userId = ?').run(id, req.userId);
   
@@ -262,6 +282,11 @@ router.put('/inspirations/:id', (req, res) => {
   const { id } = req.params;
   const { content, tags, pinned } = req.body;
   
+  const existing = db.prepare('SELECT id FROM inspirations WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '灵感不存在或无权访问' });
+  }
+  
   const now = new Date().toISOString();
   
   db.prepare(`
@@ -292,6 +317,11 @@ router.put('/inspirations/:id', (req, res) => {
 router.delete('/inspirations/:id', (req, res) => {
   const db = getDb();
   const { id } = req.params;
+  
+  const existing = db.prepare('SELECT id FROM inspirations WHERE id = ? AND userId = ?').get(id, req.userId);
+  if (!existing) {
+    return res.status(404).json({ error: '灵感不存在或无权访问' });
+  }
   
   db.prepare('DELETE FROM inspirations WHERE id = ? AND userId = ?').run(id, req.userId);
   

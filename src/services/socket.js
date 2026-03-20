@@ -27,9 +27,6 @@ export const initSocket = (onDataChange) => {
     }
   });
 
-  socket.on('disconnect', () => {
-  });
-
   dataChangeCallback = onDataChange;
   return socket;
 };

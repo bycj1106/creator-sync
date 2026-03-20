@@ -41,6 +41,9 @@ db.exec(`
     FOREIGN KEY (userId) REFERENCES users(id)
   );
 
+  CREATE INDEX IF NOT EXISTS idx_plans_userId ON plans(userId);
+  CREATE INDEX IF NOT EXISTS idx_plans_createdAt ON plans(createdAt);
+
   CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     userId INTEGER NOT NULL,
@@ -52,6 +55,9 @@ db.exec(`
     FOREIGN KEY (userId) REFERENCES users(id)
   );
 
+  CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks(userId);
+  CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed);
+
   CREATE TABLE IF NOT EXISTS inspirations (
     id TEXT PRIMARY KEY,
     userId INTEGER NOT NULL,
@@ -62,6 +68,9 @@ db.exec(`
     updatedAt TEXT,
     FOREIGN KEY (userId) REFERENCES users(id)
   );
+
+  CREATE INDEX IF NOT EXISTS idx_inspirations_userId ON inspirations(userId);
+  CREATE INDEX IF NOT EXISTS idx_inspirations_pinned ON inspirations(pinned);
 `);
 
 export const getDb = () => db;

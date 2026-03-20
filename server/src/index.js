@@ -1,5 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config();
+
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET environment variable is required');
+  process.exit(1);
+}
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -37,20 +43,31 @@ app.use('/api/data', dataRoutes);
 io.on('connection', (socket) => {
   console.warn('Client connected:', socket.id);
 
+  const authTimeout = setTimeout(() => {
+    if (!socket.userId) {
+      console.warn('Socket authentication timeout, disconnecting:', socket.id);
+      socket.disconnect(true);
+    }
+  }, 10000);
+
   socket.on('authenticate', async (token) => {
+    clearTimeout(authTimeout);
     try {
       const jwt = await import('jsonwebtoken');
-      const { JWT_SECRET } = await import('./middleware/auth.js');
-      const decoded = jwt.default.verify(token, JWT_SECRET);
+      const { getJWT_SECRET } = await import('./middleware/auth.js');
+      const secret = getJWT_SECRET();
+      const decoded = jwt.default.verify(token, secret);
       socket.userId = decoded.userId;
       socket.join(`user_${decoded.userId}`);
       console.warn(`User ${decoded.username} authenticated`);
     } catch {
-      console.warn('Socket authentication failed');
+      console.warn('Socket authentication failed, disconnecting:', socket.id);
+      socket.disconnect(true);
     }
   });
 
   socket.on('disconnect', () => {
+    clearTimeout(authTimeout);
     console.warn('Client disconnected:', socket.id);
   });
 });
