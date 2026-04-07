@@ -39,13 +39,17 @@ describe('api service', () => {
       });
 
       const { authApi } = await import('../services/api');
-      const result = await authApi.register('testuser', 'password123');
+      const result = await authApi.register('testuser', 'password123', 'CREATOR2026');
 
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:3001/api/auth/register',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ username: 'testuser', password: 'password123' })
+          body: JSON.stringify({
+            username: 'testuser',
+            password: 'password123',
+            invitationCode: 'CREATOR2026'
+          })
         })
       );
       expect(result).toEqual(mockResponse);
@@ -59,7 +63,7 @@ describe('api service', () => {
 
       const { authApi } = await import('../services/api');
 
-      await expect(authApi.register('testuser', 'password123'))
+      await expect(authApi.register('testuser', 'password123', 'CREATOR2026'))
         .rejects.toThrow('用户名已存在');
     });
   });

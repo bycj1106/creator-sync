@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getDb } from '../models/db.js';
 import { generateToken } from '../middleware/auth.js';
+import { normalizeInvitationCode } from './auth-helpers.js';
 
 const router = express.Router();
 
@@ -35,7 +36,8 @@ function clearRateLimit(ip) {
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, invitationCode } = req.body;
+    const { username, password } = req.body;
+    const invitationCode = normalizeInvitationCode(req.body.invitationCode);
     
     if (!username || !password) {
       return res.status(400).json({ error: '用户名和密码不能为空' });

@@ -44,10 +44,12 @@ export function Login({ onLogin }) {
     setError('');
     setLoading(true);
 
+    const normalizedInvitationCode = invitationCode.trim().toUpperCase();
+
     try {
       const result = isLogin 
         ? await authApi.login(username, password)
-        : await authApi.register(username, password, invitationCode);
+        : await authApi.register(username, password, normalizedInvitationCode);
       
       setToken(result.token);
       setStoredUser(result.user);
