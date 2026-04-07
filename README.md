@@ -360,15 +360,91 @@ pm2 save
 
 ### 前端部署
 
+#### 方式一：静态服务器托管
+
 ```bash
-# 构建生产版本
+# 1. 构建生产版本
 npm run build
 
-# 预览构建结果
-npm run preview
+# 2. 将 dist/ 目录上传到服务器的 Web 目录
+scp -r dist/* user@your-server:/var/www/creator-sync/
 ```
 
-构建产物位于 `dist/` 目录，可部署到任意静态服务器。
+#### 方式二：完整云服务器部署（推荐）
+
+适合已使用 PM2 部署后端的场景：
+
+**Step 1: 构建前端**
+```bash
+npm run build
+```
+
+**Step 2: 上传到服务器**
+```bash
+scp -r dist/* user@your-server:/var/www/creator-sync/
+```
+
+**Step 3: 配置 Nginx**
+```bash
+# 创建 Nginx 配置文件
+sudo nano /etc/nginx/conf.d/creator-sync.conf
+```
+
+写入以下内容：
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    root /var/www/creator-sync;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /socket.io {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+**Step 4: 重启 Nginx**
+```bash
+sudo nginx -t && sudo nginx -s reload
+```
+
+**Step 5: 开放防火墙端口（如需要）**
+```bash
+# 云服务器需在控制台安全组开放 80 端口
+```
+
+**后续更新前端：**
+```bash
+# 重新构建后，上传即可
+npm run build && scp -r dist/* user@your-server:/var/www/creator-sync/
+```
+
+#### HTTPS 配置（可选）
+
+使用 Let's Encrypt 免费证书：
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+---
 
 ### Nginx 配置示例
 
