@@ -26,19 +26,3 @@ export function Modal({ isOpen, onClose, title, children }) {
     </div>
   );
 }
-
-export function SlideModal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div 
-        className="absolute inset-0 bg-black/30" 
-        onClick={onClose}
-      />
-      <div className="relative bg-white w-full max-w-lg rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up">
-        {children}
-      </div>
-    </div>
-  );
-}

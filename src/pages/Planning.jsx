@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getMonthDays, formatDate, formatDisplayDate, generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
@@ -6,12 +7,6 @@ import { dataApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const progressSteps = ['创意', '脚本', '拍摄', '剪辑', '发布'];
-
-function isDateInRange(date, startDate, endDate) {
-  if (!startDate || !endDate) return false;
-  const d = formatDate(date);
-  return d >= startDate && d <= endDate;
-}
 
 const statusConfig = {
   '创意': { label: '创意中', color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
@@ -27,8 +22,11 @@ export function Planning({ data: plans = [], updateData }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
+  const [draftPlan, setDraftPlan] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -40,13 +38,51 @@ export function Planning({ data: plans = [], updateData }) {
   );
   const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 
-  const getPlansForDate = (date) => {
-    if (!date) return [];
-    return plans.filter(p => isDateInRange(date, p.startDate, p.endDate));
-  };
+  // Build a date index once per plan list update so the calendar grid does not
+  // rescan every plan for every visible day cell.
+  const plansByDate = useMemo(() => {
+    const dateMap = new Map();
+
+    plans.forEach((plan) => {
+      if (!plan.startDate || !plan.endDate) {
+        return;
+      }
+
+      for (
+        let cursor = new Date(`${plan.startDate}T00:00:00`);
+        formatDate(cursor) <= plan.endDate;
+        cursor.setDate(cursor.getDate() + 1)
+      ) {
+        const dateKey = formatDate(cursor);
+        const items = dateMap.get(dateKey) || [];
+        items.push(plan);
+        dateMap.set(dateKey, items);
+      }
+    });
+
+    return dateMap;
+  }, [plans]);
+
+  useEffect(() => {
+    const presetTitle = location.state?.newPlanTitle;
+    if (!presetTitle) {
+      return;
+    }
+
+    setEditingPlan(null);
+    setDraftPlan({ title: presetTitle });
+    setIsModalOpen(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : null;
-  const selectedPlans = selectedDate ? getPlansForDate(selectedDate) : [];
+  const selectedPlans = useMemo(() => {
+    if (!selectedDateStr) {
+      return [];
+    }
+
+    return plansByDate.get(selectedDateStr) || [];
+  }, [plansByDate, selectedDateStr]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -74,35 +110,48 @@ export function Planning({ data: plans = [], updateData }) {
 
   const handleCreatePlan = () => {
     setEditingPlan(null);
+    setDraftPlan(null);
     setIsModalOpen(true);
   };
 
   const handleEditPlan = (plan) => {
+    setDraftPlan(null);
     setEditingPlan(plan);
     setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingPlan(null);
+    setDraftPlan(null);
   };
 
   const handleSavePlan = async (data) => {
     setSaving(true);
     setError('');
+    const nextStatus = data.progress === '发布' ? 'published' : 'pending';
+
     try {
       if (editingPlan) {
+        const now = new Date().toISOString();
+        const updatedPlan = { ...editingPlan, ...data, status: nextStatus, updatedAt: now };
         if (isLocalUser) {
-          updateData('plans', 'update', { ...editingPlan, ...data });
-        } else {
-          const updatedPlan = { ...editingPlan, ...data };
-          await dataApi.updatePlan(editingPlan.id, updatedPlan);
           updateData('plans', 'update', updatedPlan);
+        } else {
+          const savedPlan = await dataApi.updatePlan(editingPlan.id, updatedPlan);
+          updateData('plans', 'update', savedPlan);
         }
       } else {
+        const now = new Date().toISOString();
         const newPlan = {
           id: generateId(),
           ...data,
           startDate: data.startDate || formatDate(today),
           endDate: data.endDate || formatDate(today),
-          progress: '创意',
-          status: 'pending',
-          createdAt: new Date().toISOString(),
+          progress: data.progress || '创意',
+          status: nextStatus,
+          createdAt: now,
+          updatedAt: now,
         };
         if (isLocalUser) {
           updateData('plans', 'create', newPlan);
@@ -111,7 +160,7 @@ export function Planning({ data: plans = [], updateData }) {
           updateData('plans', 'create', created);
         }
       }
-      setIsModalOpen(false);
+      handleCloseModal();
     } catch (err) {
       setError(err.message || '保存规划失败');
     } finally {
@@ -140,10 +189,19 @@ export function Planning({ data: plans = [], updateData }) {
       setSaving(true);
       setError('');
       try {
+        const now = new Date().toISOString();
+        const updatedPlan = {
+          ...plan,
+          progress,
+          status: progress === '发布' ? 'published' : 'pending',
+          updatedAt: now,
+        };
         if (!isLocalUser) {
-          await dataApi.updatePlan(planId, { ...plan, progress });
+          const savedPlan = await dataApi.updatePlan(planId, updatedPlan);
+          updateData('plans', 'update', savedPlan);
+          return;
         }
-        updateData('plans', 'update', { ...plan, progress });
+        updateData('plans', 'update', updatedPlan);
       } catch (err) {
         setError(err.message || '更新进度失败');
       } finally {
@@ -209,7 +267,7 @@ export function Planning({ data: plans = [], updateData }) {
                   return <div key={`empty-${index}`} className="aspect-square" />;
                 }
                 const dateStr = formatDate(date);
-                const plansOnDate = getPlansForDate(date);
+                const plansOnDate = plansByDate.get(dateStr) || [];
                 const hasPlan = plansOnDate.length > 0;
                 const isSelected = selectedDateStr === dateStr;
                 const isToday = formatDate(date) === formatDate(today);
@@ -349,13 +407,13 @@ export function Planning({ data: plans = [], updateData }) {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title={editingPlan ? '编辑规划' : '新建视频规划'}
       >
         <PlanForm 
-          initialData={editingPlan} 
+          initialData={editingPlan || draftPlan} 
           onSave={handleSavePlan} 
-          onCancel={() => setIsModalOpen(false)} 
+          onCancel={handleCloseModal} 
         />
       </Modal>
     </div>

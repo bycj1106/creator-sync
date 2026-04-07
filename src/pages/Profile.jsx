@@ -2,11 +2,15 @@ import { useState, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from '../contexts/AuthContext';
 import { localStorageService } from '../services/localStorage';
+import { EMPTY_DATA } from '../services/dataState';
+import { Modal } from '../components/Modal';
 
 export function Profile() {
   const { user, logout, data, dataLoading } = useAuth();
   const [nickname, setNickname] = useLocalStorage('creator-sync-nickname', '创作者');
   const [isEditing, setIsEditing] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   const isLocalUser = user?.type === 'local';
 
@@ -19,11 +23,9 @@ export function Profile() {
         { label: '灵感', value: '-', color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.1)' },
       ];
     }
-    const sourceData = isLocalUser 
-      ? localStorageService.getLocalData() 
-      : (data || { plans: [], tasks: [], inspirations: [] });
-    const completedPlans = sourceData.plans.filter(p => p.status === 'published').length;
-    const pendingTasks = sourceData.tasks.filter(t => !t.completed).length;
+    const sourceData = data || EMPTY_DATA;
+    const completedPlans = sourceData.plans.filter((plan) => plan.progress === '发布').length;
+    const pendingTasks = sourceData.tasks.filter((task) => !task.completed).length;
     return [
       { label: '视频规划', value: sourceData.plans.length, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.1)' },
       { label: '已完成', value: completedPlans, color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)' },
@@ -48,15 +50,16 @@ export function Profile() {
     input.type = 'file';
     input.accept = '.json';
     input.onchange = async (e) => {
-      const file = e.target.files[0];
+      const file = e.target.files?.[0];
       if (file) {
         const text = await file.text();
-        const success = localStorageService.importData(text);
-        if (success) {
-          alert('数据导入成功，请重新登录以加载数据');
+        const result = localStorageService.importData(text);
+        setNotice({
+          type: result.success ? 'success' : 'error',
+          message: result.message,
+        });
+        if (result.success) {
           logout();
-        } else {
-          alert('数据导入失败，请检查文件格式');
         }
       }
     };
@@ -77,9 +80,12 @@ export function Profile() {
   ];
 
   const handleLogout = () => {
-    if (confirm('确定要退出登录吗？')) {
-      logout();
-    }
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setIsLogoutConfirmOpen(false);
+    logout();
   };
 
   return (
@@ -88,6 +94,18 @@ export function Profile() {
         <h1>我的</h1>
         <p className="subtitle">个人中心</p>
       </header>
+
+      {notice && (
+        <div
+          className={`mx-4 mt-3 rounded-lg p-3 text-sm ${
+            notice.type === 'success'
+              ? 'bg-green-50 text-green-600'
+              : 'bg-red-50 text-red-500'
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
 
       <div className="p-4 space-y-3">
         <div className="card">
@@ -214,6 +232,34 @@ export function Profile() {
           创作者同步助手 @四夕云升
         </p>
       </div>
+
+      <Modal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        title="确认退出登录"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500">
+            退出登录不会清空本地离线数据，之后仍可重新登录继续使用。
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setIsLogoutConfirmOpen(false)}
+              className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={confirmLogout}
+              className="flex-1 px-4 py-3 text-white rounded-xl font-medium bg-red-500"
+            >
+              退出登录
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

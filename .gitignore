@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.codex
 
 # Package lock (use yarn or pnpm instead)
 package-lock.json

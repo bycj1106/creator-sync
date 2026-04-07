@@ -150,8 +150,7 @@ creator-sync/
 │   ├── components/              # 公共组件
 │   │   ├── Layout.jsx           # 布局组件
 │   │   ├── Modal.jsx            # 弹窗组件
-│   │   ├── TabBar.jsx           # 标签栏
-│   │   └── UI.jsx               # UI 组件库
+│   │   └── UI.jsx               # 通用状态 UI
 │   ├── contexts/                # React Context
 │   │   └── AuthContext.jsx      # 认证上下文
 │   ├── hooks/                   # 自定义 Hooks
@@ -164,9 +163,10 @@ creator-sync/
 │   │   └── Login.jsx            # 登录/注册
 │   ├── services/                # API 服务
 │   │   ├── api.js               # HTTP 请求
+│   │   ├── dataState.js         # 前端数据变更规则
+│   │   ├── session.js           # 会话存储
 │   │   └── socket.js            # WebSocket
 │   ├── test/                    # 单元测试
-│   ├── types/                   # 类型定义
 │   ├── utils/                   # 工具函数
 │   │   └── date.js              # 日期工具
 │   ├── App.jsx                  # 根组件

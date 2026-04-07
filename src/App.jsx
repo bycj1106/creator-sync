@@ -8,7 +8,9 @@ import { Profile } from './pages/Profile';
 import { Login } from './pages/Login';
 import { AuthContext } from './contexts/AuthContext';
 import { dataApi, setToken, getToken } from './services/api';
+import { applyEntityChange, EMPTY_DATA, normalizeEntityType } from './services/dataState';
 import { localStorageService } from './services/localStorage';
+import { clearStoredUser, getStoredUser, setStoredUser } from './services/session';
 import { initSocket, disconnectSocket } from './services/socket';
 
 function LoadingOverlay({ message = '加载中...' }) {
@@ -25,44 +27,28 @@ function LoadingOverlay({ message = '加载中...' }) {
 function getInitialUser() {
   const token = getToken();
   if (!token) {
-    const localUser = localStorageService.getLocalUser();
-    if (localUser) {
-      return localUser;
-    }
-    return null;
+    return localStorageService.getLocalUser();
   }
-  try {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  } catch {
-    return null;
-  }
+  return getStoredUser();
 }
 
 function isLocalUser(user) {
   return user && user.type === 'local';
 }
 
-const normalizeType = (type) => {
-  const map = { plan: 'plans', task: 'tasks', inspiration: 'inspirations' };
-  return map[type] || type;
-};
-
 function AppContent() {
   const [user, setUser] = useState(getInitialUser);
   const [dataLoading, setDataLoading] = useState(false);
-  const [data, setData] = useState({ plans: [], tasks: [], inspirations: [] });
+  const [data, setData] = useState(EMPTY_DATA);
   const navigate = useNavigate();
   const socketInitialized = useRef(false);
-  const pendingUpdates = useRef(new Set());
 
   const logout = useCallback(() => {
     setUser(null);
+    setData(EMPTY_DATA);
     setToken(null);
-    localStorageService.clearLocalUser();
-    localStorage.removeItem('user');
+    clearStoredUser();
     socketInitialized.current = false;
-    pendingUpdates.current.clear();
     disconnectSocket();
     navigate('/login');
   }, [navigate]);
@@ -82,7 +68,6 @@ function AppContent() {
         const result = await dataApi.getAll();
         setData(result);
       } catch (err) {
-        console.error(err);
         if (err.message === '无效的令牌' || err.message === '未授权') {
           logout();
         }
@@ -96,46 +81,12 @@ function AppContent() {
     if (socketInitialized.current) return;
     socketInitialized.current = true;
 
+    // Initial page load fetches the full dataset once; socket updates only
+    // merge follow-up entity changes so we do not refetch on every mutation.
     initSocket((change) => {
-      const normalizedType = normalizeType(change.type);
-      const updateKey = `${normalizedType}_${change.action}_${change.data?.id}`;
-      if (pendingUpdates.current.has(updateKey)) {
-        pendingUpdates.current.delete(updateKey);
-        return;
-      }
-      
-      setData(prev => {
-        const { action, data: item } = change;
-        if (normalizedType === 'plans') {
-          if (action === 'create') {
-            if (prev.plans.some(p => p.id === item.id)) return prev;
-            return { ...prev, plans: [...prev.plans, item] };
-          } else if (action === 'update') {
-            return { ...prev, plans: prev.plans.map(p => p.id === item.id ? item : p) };
-          } else if (action === 'delete') {
-            return { ...prev, plans: prev.plans.filter(p => p.id !== item.id) };
-          }
-        } else if (normalizedType === 'tasks') {
-          if (action === 'create') {
-            if (prev.tasks.some(t => t.id === item.id)) return prev;
-            return { ...prev, tasks: [...prev.tasks, item] };
-          } else if (action === 'update') {
-            return { ...prev, tasks: prev.tasks.map(t => t.id === item.id ? item : t) };
-          } else if (action === 'delete') {
-            return { ...prev, tasks: prev.tasks.filter(t => t.id !== item.id) };
-          }
-        } else if (normalizedType === 'inspirations') {
-          if (action === 'create') {
-            if (prev.inspirations.some(i => i.id === item.id)) return prev;
-            return { ...prev, inspirations: [...prev.inspirations, item] };
-          } else if (action === 'update') {
-            return { ...prev, inspirations: prev.inspirations.map(i => i.id === item.id ? item : i) };
-          } else if (action === 'delete') {
-            return { ...prev, inspirations: prev.inspirations.filter(i => i.id !== item.id) };
-          }
-        }
-        return prev;
-      });
+      setData((prev) =>
+        applyEntityChange(prev, normalizeEntityType(change.type), change.action, change.data)
+      );
     });
 
     return () => {
@@ -145,43 +96,28 @@ function AppContent() {
 
   const login = useCallback((userData, newToken) => {
     setUser(userData);
+    setStoredUser(userData);
     if (newToken) {
       setToken(newToken);
     }
   }, []);
 
-  const updateData = (type, action, item) => {
-    const normalizedType = normalizeType(type);
+  const updateData = useCallback((type, action, item) => {
     if (isLocalUser(user)) {
-      const newData = localStorageService.updateLocalData(normalizedType, action, item);
+      const newData = localStorageService.updateLocalData(type, action, item);
       setData(newData);
       return;
     }
 
-    setData(prev => {
-      if (normalizedType === 'plans') {
-        if (action === 'create') return { ...prev, plans: [...prev.plans, item] };
-        if (action === 'update') return { ...prev, plans: prev.plans.map(p => p.id === item.id ? item : p) };
-        if (action === 'delete') return { ...prev, plans: prev.plans.filter(p => p.id !== item.id) };
-      } else if (normalizedType === 'tasks') {
-        if (action === 'create') return { ...prev, tasks: [...prev.tasks, item] };
-        if (action === 'update') return { ...prev, tasks: prev.tasks.map(t => t.id === item.id ? item : t) };
-        if (action === 'delete') return { ...prev, tasks: prev.tasks.filter(t => t.id !== item.id) };
-      } else if (normalizedType === 'inspirations') {
-        if (action === 'create') return { ...prev, inspirations: [...prev.inspirations, item] };
-        if (action === 'update') return { ...prev, inspirations: prev.inspirations.map(i => i.id === item.id ? item : i) };
-        if (action === 'delete') return { ...prev, inspirations: prev.inspirations.filter(i => i.id !== item.id) };
-      }
-      return prev;
-    });
-  };
+    setData((prev) => applyEntityChange(prev, type, action, item));
+  }, [user]);
 
   if (!user) {
     return <Login onLogin={login} />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, logout, dataLoading, setDataLoading, data }}>
+    <AuthContext.Provider value={{ user, logout, dataLoading, data }}>
       {dataLoading && <LoadingOverlay message="同步数据中..." />}
       <Routes>
         <Route path="/" element={<Layout />}>

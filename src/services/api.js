@@ -1,14 +1,26 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
 
-let token = localStorage.getItem('token');
+function loadStoredToken() {
+  try {
+    return window.localStorage.getItem('token');
+  } catch {
+    return null;
+  }
+}
+
+let token = loadStoredToken();
 
 export const setToken = (newToken) => {
   token = newToken;
-  if (newToken) {
-    localStorage.setItem('token', newToken);
-  } else {
-    localStorage.removeItem('token');
+  try {
+    if (newToken) {
+      window.localStorage.setItem('token', newToken);
+    } else {
+      window.localStorage.removeItem('token');
+    }
+  } catch {
+    // Ignore storage write failures and continue with the in-memory token.
   }
 };
 

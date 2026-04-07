@@ -1,10 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
 import { dataApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+
+function formatTimeAgo(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now - date) / 1000);
+
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
+  if (diff < 172800) return '昨天';
+  return date.toLocaleDateString('zh-CN');
+}
 
 export function Inspiration({ data: inspirations = [], updateData }) {
   const { user } = useAuth();
@@ -15,29 +27,34 @@ export function Inspiration({ data: inspirations = [], updateData }) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const allTags = [...new Set(inspirations.flatMap(i => i.tags || []))];
-  
-  const filteredInspirations = activeTag === 'all'
-    ? inspirations
-    : inspirations.filter(i => (i.tags || []).includes(activeTag));
+  const allTags = useMemo(
+    () => [...new Set(inspirations.flatMap((item) => item.tags || []))],
+    [inspirations]
+  );
 
-  const sortedInspirations = [...filteredInspirations].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+  const sortedInspirations = useMemo(() => {
+    const filteredInspirations = activeTag === 'all'
+      ? inspirations
+      : inspirations.filter((item) => (item.tags || []).includes(activeTag));
+
+    return [...filteredInspirations].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+  }, [activeTag, inspirations]);
 
   const handleAddInspiration = async (data) => {
     setSaving(true);
     setError('');
-    try {
-      const newInspiration = {
-        id: generateId(),
-        content: data.content,
-        tags: data.tags.filter(t => t.trim()),
-        pinned: false,
-        createdAt: new Date().toISOString(),
-      };
+      try {
+        const newInspiration = {
+          id: generateId(),
+          content: data.content,
+          tags: data.tags,
+          pinned: false,
+          createdAt: new Date().toISOString(),
+        };
       if (isLocalUser) {
         updateData('inspirations', 'create', newInspiration);
       } else {
@@ -60,7 +77,9 @@ export function Inspiration({ data: inspirations = [], updateData }) {
       try {
         const updatedData = { ...inspiration, pinned: !inspiration.pinned };
         if (!isLocalUser) {
-          await dataApi.updateInspiration(id, updatedData);
+          const savedInspiration = await dataApi.updateInspiration(id, updatedData);
+          updateData('inspirations', 'update', savedInspiration);
+          return;
         }
         updateData('inspirations', 'update', updatedData);
       } catch (err) {
@@ -87,24 +106,11 @@ export function Inspiration({ data: inspirations = [], updateData }) {
   };
 
   const handleConvertToPlan = (inspiration) => {
-    navigate('/', { 
-      state: { 
+    navigate('/', {
+      state: {
         newPlanTitle: inspiration.content,
-        newPlanTags: inspiration.tags 
-      } 
+      },
     });
-  };
-
-  const formatTimeAgo = (dateStr) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
-    
-    if (diff < 60) return '刚刚';
-    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
-    if (diff < 172800) return '昨天';
-    return date.toLocaleDateString('zh-CN');
   };
 
   return (
@@ -244,7 +250,7 @@ function InspirationForm({ onSave, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!content.trim()) return;
-    const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+    const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
     onSave({ content, tags });
   };
 

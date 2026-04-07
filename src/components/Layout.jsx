@@ -31,10 +31,24 @@ const icons = {
   ),
 };
 
+function getTabPath(tabId) {
+  return `/${tabId === 'planning' ? '' : tabId}`;
+}
+
 function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.matchMedia(query).matches;
+  });
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
     const media = window.matchMedia(query);
     const listener = () => setMatches(media.matches);
     media.addEventListener('change', listener);
@@ -63,7 +77,7 @@ function Sidebar() {
           return (
             <button
               key={tab.id}
-              onClick={() => navigate(`/${tab.id === 'planning' ? '' : tab.id}`)}
+              onClick={() => navigate(getTabPath(tab.id))}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-200 ${
                 isActive 
                   ? 'bg-blue-50 text-blue-500 border-r-2 border-blue-500' 
@@ -94,7 +108,7 @@ function TabBar() {
           return (
             <button
               key={tab.id}
-              onClick={() => navigate(`/${tab.id === 'planning' ? '' : tab.id}`)}
+              onClick={() => navigate(getTabPath(tab.id))}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200 ${
                 isActive ? 'text-blue-500' : 'text-gray-400'
               }`}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { generateId } from '../utils/date';
 import { Modal } from '../components/Modal';
 import { SavingOverlay } from '../components/UI';
@@ -18,25 +18,46 @@ export function Tasks({ data: tasks = [], updateData }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const filteredTasks = activeCategory === 'all' 
-    ? tasks 
-    : activeCategory === 'completed'
-    ? tasks.filter(t => t.completed)
-    : tasks.filter(t => t.category === activeCategory || !t.category);
+  const { completedCount, filteredTasks, progressPercent } = useMemo(() => {
+    let completed = 0;
+    const nextFilteredTasks = [];
 
-  const completedCount = tasks.filter(t => t.completed).length;
-  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    tasks.forEach((task) => {
+      if (task.completed) {
+        completed += 1;
+      }
+
+      const matchesCategory = activeCategory === 'all'
+        || (activeCategory === 'completed' && task.completed)
+        || (activeCategory !== 'completed' && task.category === activeCategory)
+        || (activeCategory !== 'completed' && activeCategory !== 'all' && !task.category);
+
+      if (matchesCategory) {
+        nextFilteredTasks.push(task);
+      }
+    });
+
+    return {
+      completedCount: completed,
+      filteredTasks: nextFilteredTasks,
+      progressPercent: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
+    };
+  }, [activeCategory, tasks]);
 
   const handleAddTask = async (data) => {
     setSaving(true);
+    setError('');
     try {
+      const now = new Date().toISOString();
       const newTask = {
         id: generateId(),
         title: data.title,
         category: data.category,
         completed: false,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
       };
       if (isLocalUser) {
         updateData('tasks', 'create', newTask);
@@ -45,6 +66,8 @@ export function Tasks({ data: tasks = [], updateData }) {
         updateData('tasks', 'create', created);
       }
       setIsModalOpen(false);
+    } catch (err) {
+      setError(err.message || '添加任务失败');
     } finally {
       setSaving(false);
     }
@@ -54,12 +77,22 @@ export function Tasks({ data: tasks = [], updateData }) {
     const task = tasks.find(t => t.id === id);
     if (task) {
       setSaving(true);
+      setError('');
       try {
-        const updatedData = { ...task, completed: !task.completed };
+        const now = new Date().toISOString();
+        const updatedData = {
+          ...task,
+          completed: !task.completed,
+          updatedAt: now,
+        };
         if (!isLocalUser) {
-          await dataApi.updateTask(id, updatedData);
+          const savedTask = await dataApi.updateTask(id, updatedData);
+          updateData('tasks', 'update', savedTask);
+          return;
         }
         updateData('tasks', 'update', updatedData);
+      } catch (err) {
+        setError(err.message || '更新任务失败');
       } finally {
         setSaving(false);
       }
@@ -68,11 +101,14 @@ export function Tasks({ data: tasks = [], updateData }) {
 
   const handleDeleteTask = async (id) => {
     setSaving(true);
+    setError('');
     try {
       if (!isLocalUser) {
         await dataApi.deleteTask(id);
       }
       updateData('tasks', 'delete', { id });
+    } catch (err) {
+      setError(err.message || '删除任务失败');
     } finally {
       setSaving(false);
     }
@@ -85,6 +121,12 @@ export function Tasks({ data: tasks = [], updateData }) {
         <h1>待办清单</h1>
         <p className="subtitle">已完成 {completedCount} / {tasks.length}</p>
       </header>
+
+      {error && (
+        <div className="mx-4 mt-2 p-3 bg-red-50 text-red-500 text-sm rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="p-4 space-y-3">
         {tasks.length > 0 && (

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { authApi, setToken } from '../services/api';
 import { localStorageService } from '../services/localStorage';
+import { setStoredUser } from '../services/session';
 
 export function Login({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -33,7 +34,6 @@ export function Login({ onLogin }) {
     if (!user) {
       user = localStorageService.saveLocalUser('本地用户');
     }
-    localStorage.setItem('user', JSON.stringify(user));
     if (onLogin) {
       onLogin(user, null);
     }
@@ -50,7 +50,7 @@ export function Login({ onLogin }) {
         : await authApi.register(username, password, invitationCode);
       
       setToken(result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
+      setStoredUser(result.user);
       
       if (!isLogin) {
         setShowSuccess(true);
@@ -58,7 +58,7 @@ export function Login({ onLogin }) {
           try {
             const loginResult = await authApi.login(username, password);
             setToken(loginResult.token);
-            localStorage.setItem('user', JSON.stringify(loginResult.user));
+            setStoredUser(loginResult.user);
             if (onLogin) {
               onLogin(loginResult.user, loginResult.token);
             }
